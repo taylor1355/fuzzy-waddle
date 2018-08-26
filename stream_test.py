@@ -1,6 +1,6 @@
 import sys, time
 
-import Utils
+import utils
 
 from PySide2.QtCore import QTimer
 from PySide2.QtWidgets import QWidget, QPushButton, QLabel
@@ -9,7 +9,7 @@ from PySide2.QtGui import QPixmap
 class StreamTab(QWidget):
     def __init__(self):
         super(StreamTab, self).__init__()
-        openStreamButton = Utils.createButton("Open Stream", self)
+        openStreamButton = utils.createButton("Open Stream", self)
         openStreamButton.released.connect(self._open_stream)
 
     def _open_stream(self):

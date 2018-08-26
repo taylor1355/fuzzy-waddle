@@ -1,8 +1,8 @@
 import sys
 
-import Utils
-from Home import HomeTab
-from StreamTest import StreamTab
+import utils
+from home import HomeTab
+from stream_test import StreamTab
 
 from PySide2.QtWidgets import QApplication, QLabel, QPushButton, QMainWindow, QDialog, QTabWidget, QWidget, QVBoxLayout
 
