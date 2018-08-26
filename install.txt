@@ -1,0 +1,12 @@
+Input and Screen Capture:
+pip install numpy
+pip install opencv-python
+python -m pip install --upgrade --user mss
+pip install pyautogui
+
+GUI:
+download.qt.io
+official_releases > QtForPython > pyside2
+grab appropriate .whl
+cmd > 'pip install [pacakge_name.whl]'
+'pip show PySide2' to verify installation
