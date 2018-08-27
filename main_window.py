@@ -2,9 +2,12 @@ import sys
 
 import utils
 from home import HomeTab
+from energy import EnergyTab
 from stream_test import StreamTab
 
-from PySide2.QtWidgets import QApplication, QLabel, QPushButton, QMainWindow, QDialog, QTabWidget, QWidget, QVBoxLayout
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+from PySide2.QtCore import *
 
 class MainWindow(QDialog):
     def __init__(self):
@@ -14,6 +17,8 @@ class MainWindow(QDialog):
 
         homeTab = HomeTab()
         tabWidget.addTab(homeTab, "Home")
+        energyTab = EnergyTab()
+        tabWidget.addTab(energyTab, "Energy")
         streamTab = StreamTab()
         tabWidget.addTab(streamTab, "Stream Test")
 
@@ -21,7 +26,7 @@ class MainWindow(QDialog):
         layout.addWidget(tabWidget)
         self.setLayout(layout)
 
-        self.setWindowTitle("Window Test v1.0")
+        self.setWindowTitle("Fuzzy Waddle v1.0")
 
 if __name__ == "__main__":
     app = QApplication()

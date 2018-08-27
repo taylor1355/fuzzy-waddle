@@ -1,13 +1,13 @@
 import sys
 
-from PySide2.QtWidgets import QApplication, QLabel, QPushButton, QMainWindow, QWidget
+import utils
+
+from PySide2.QtGui import *
+from PySide2.QtWidgets import *
+from PySide2.QtCore import *
 
 class HomeTab(QWidget):
     def __init__(self):
         super(HomeTab, self).__init__()
 
-        button1 = QPushButton("Test Button", self)
-        button1.released.connect(self._button_cb)
-
-    def _button_cb(self):
-        print("Home Tab Button!!!")
+        label = utils.createLabelCText("Welcome", self, 0, 0)
