@@ -28,7 +28,7 @@ class StreamTab(QWidget):
         self.isWindowShown = False;
         self.thread = StreamThread()
 
-        self.workerLabel = utils.createLabel("", self, 0, 4)
+        self.workerLabel = utils.createLabel("Worker is Sleeping", self, 0, 4)
         self.connect(self.thread, SIGNAL("send_back_qstring(QString)"), self._get_qstring)
 
     def _get_qstring(self, text):
@@ -46,9 +46,11 @@ class StreamTab(QWidget):
 
     def _start_worker_button_handler(self):
         self.thread.start()
+        self.workerLabel.setText("Worker is Running")
 
     def _stop_worker_button_handler(self):
         self.thread.terminate()
+        self.workerLabel.setText("Worker is Sleeping")
 
 
 class StreamWindow(QWidget):
