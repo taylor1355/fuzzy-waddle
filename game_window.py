@@ -66,6 +66,9 @@ class GameWindow():
             monitor = {"top": self.window_rect.bottom, "left": self.window_rect.left, "width": self.window_rect.width, "height": self.window_rect.height}
             return np.array(sct.grab(monitor))
 
+    def local_to_global(self, point):
+        return np.array([point[0] + self.window_rect.left, point[1] + self.window_rect.bottom])
+
     def find_window(self):
         results = []
         @WNDENUMPROC
@@ -96,10 +99,3 @@ class Rect():
         self.top = top
         self.bottom = bottom
         self.height = abs(top - bottom)
-
-
-window = GameWindow("BLACK DESERT")
-window.move_to_foreground()
-while True:
-    cv.imshow("Window", window.grab_frame())
-    cv.waitKey(1)
