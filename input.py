@@ -11,6 +11,17 @@ def is_admin():
     try: return ctypes.windll.shell32.IsUserAnAdmin()
     except: return False
 
+def cut_tree():
+    direct_input.PressKey("R")
+    time.sleep(1)
+    direct_input.ReleaseKey("R")
+
+    time.sleep(12)
+
+    direct_input.PressKey("R")
+    time.sleep(1)
+    direct_input.ReleaseKey("R")
+
 def main():
     window = GameWindow("BLACK DESERT")
     window.move_to_foreground()
@@ -23,15 +34,7 @@ def main():
     time.sleep(2)
     pyautogui.mouseUp(button='right')
 
-    direct_input.PressKey("R")
-    time.sleep(1)
-    direct_input.ReleaseKey("R")
-
-    time.sleep(12)
-
-    direct_input.PressKey("R")
-    time.sleep(1)
-    direct_input.ReleaseKey("R")
+    cut_tree()
 
     while True:
         cv.imshow("Window", window.grab_frame())

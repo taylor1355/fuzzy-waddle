@@ -1,4 +1,9 @@
 import sys, time
+import pyautogui
+
+from game_window import GameWindow
+import direct_input
+import input
 
 import utils
 
@@ -71,8 +76,14 @@ class StreamThread(QThread):
         self.wait()
 
     def run(self):
+        window = GameWindow("BLACK DESERT")
+        window.move_to_foreground()
+
+        point = window.rect.center()
+        pyautogui.moveTo(point[0], point[1], duration=2)
+
         while 1:
-            self.emit(SIGNAL("send_back_qstring(QString)"), "this is some text")
+            direct_input.PressKey("R")
             time.sleep(1)
-            self.emit(SIGNAL("send_back_qstring(QString)"), "this is some other text")
+            direct_input.ReleaseKey("R")
             time.sleep(1)

@@ -52,8 +52,8 @@ class GameWindow():
     def __init__(self, name):
         self.name = name
 
-        self.window_info, self.window_handle, self.window_rect = self.find_window()
-        print("{} {} {}".format(self.window_info, self.window_handle, self.window_rect))
+        self.window_info, self.window_handle, self.rect = self.find_window()
+        print("{} {} {}".format(self.window_info, self.window_handle, self.rect))
         if self.window_info == None:
             print("Could not find {} window".format(self.name))
 
@@ -63,11 +63,11 @@ class GameWindow():
 
     def grab_frame(self):
         with mss.mss() as sct:
-            monitor = {"top": self.window_rect.bottom, "left": self.window_rect.left, "width": self.window_rect.width, "height": self.window_rect.height}
+            monitor = {"top": self.rect.bottom, "left": self.rect.left, "width": self.rect.width, "height": self.rect.height}
             return np.array(sct.grab(monitor))
 
     def local_to_global(self, point):
-        return np.array([point[0] + self.window_rect.left, point[1] + self.window_rect.bottom])
+        return np.array([point[0] + self.rect.left, point[1] + self.rect.bottom])
 
     def find_window(self):
         results = []
@@ -99,3 +99,8 @@ class Rect():
         self.top = top
         self.bottom = bottom
         self.height = abs(top - bottom)
+
+    def center(self):
+        x = int(self.left + self.width / 2)
+        y = int(self.bottom + self.height / 2)
+        return (x, y)

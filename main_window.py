@@ -1,4 +1,5 @@
 import sys
+import ctypes
 
 import utils
 from home import HomeTab
@@ -28,12 +29,19 @@ class MainWindow(QDialog):
 
         self.setWindowTitle("Fuzzy Waddle v1.0")
 
+def is_admin():
+    try: return ctypes.windll.shell32.IsUserAnAdmin()
+    except: return False
+
 if __name__ == "__main__":
-    app = QApplication()
+    if is_admin():
+        app = QApplication()
 
-    mainWin = MainWindow()
-    x, y = 1280, 720
-    mainWin.setFixedSize(x, y)
-    mainWin.show()
+        mainWin = MainWindow()
+        x, y = 1280, 720
+        mainWin.setFixedSize(x, y)
+        mainWin.show()
 
-    sys.exit(app.exec_())
+        sys.exit(app.exec_())
+    else:
+        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
