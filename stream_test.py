@@ -10,14 +10,14 @@ class StreamTab(QWidget):
     def __init__(self):
         super(StreamTab, self).__init__()
         openStreamButton = utils.createButton("Open Stream", self, 0, 0)
-        openStreamButton.released.connect(self._open_stream)
+        openStreamButton.released.connect(self._open_stream_button_handler)
         closeStreamButton = utils.createButton("Close Stream", self, 0, 1)
-        closeStreamButton.released.connect(self._close_stream)
+        closeStreamButton.released.connect(self._close_stream_button_handler)
 
         startWorkerButton = utils.createButton("Start Worker", self, 0, 2)
-        startWorkerButton.released.connect(self._start_worker)
+        startWorkerButton.released.connect(self._start_worker_button_handler)
         stopWorkerButton = utils.createButton("Stop Worker", self, 0, 3)
-        stopWorkerButton.released.connect(self._stop_worker)
+        stopWorkerButton.released.connect(self._stop_worker_button_handler)
 
         self.streamWindow = StreamWindow()
         self.isWindowShown = False;
