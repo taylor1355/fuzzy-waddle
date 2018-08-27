@@ -2,10 +2,6 @@ import sys, time
 
 import utils
 
-# from PySide2.QtCore import QTimer, QThread, QRunnable, QThreadPool
-# from PySide2.QtWidgets import QWidget, QPushButton, QLabel
-# from PySide2.QtGui import QPixmap
-
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
@@ -80,19 +76,3 @@ class StreamThread(QThread):
             time.sleep(1)
             self.emit(SIGNAL("send_back_qstring(QString)"), "this is some other text")
             time.sleep(1)
-
-
-
-# class StreamWorker(QRunnable):
-#     def __init__(self):
-#         super(StreamWorker, self).__init__()
-#         self.running = False
-#
-#     def run(self):
-#         self.running = True
-#         while self.running == True:
-#             print("Doing work!")
-#             time.sleep(1)
-#
-#     def stop(self):
-#         self.running = False
