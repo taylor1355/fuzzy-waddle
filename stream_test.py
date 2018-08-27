@@ -31,18 +31,18 @@ class StreamTab(QWidget):
         if self.isWindowShown == True:
             self.streamWindow.setText(text + " has been passed through")
 
-    def _open_stream(self):
+    def _open_stream_button_handle(self):
         self.isWindowShown = True;
         self.streamWindow.show()
 
-    def _close_stream(self):
+    def _close_stream_button_handle(self):
         self.isWindowShown = False;
         self.streamWindow.hide()
 
-    def _start_worker(self):
+    def _start_worker_button_handle(self):
         self.thread.start()
 
-    def _stop_worker(self):
+    def _stop_worker_button_handle(self):
         self.thread.terminate()
 
 
