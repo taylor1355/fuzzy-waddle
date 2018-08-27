@@ -9,15 +9,15 @@ from PySide2.QtCore import *
 class StreamTab(QWidget):
     def __init__(self):
         super(StreamTab, self).__init__()
-        openStream = utils.createButton("Open Stream", self, 0, 0)
-        openStream.released.connect(self._open_stream)
-        closeStream = utils.createButton("Close Stream", self, 0, 1)
-        closeStream.released.connect(self._close_stream)
+        openStreamButton = utils.createButton("Open Stream", self, 0, 0)
+        openStreamButton.released.connect(self._open_stream)
+        closeStreamButton = utils.createButton("Close Stream", self, 0, 1)
+        closeStreamButton.released.connect(self._close_stream)
 
-        startWorker = utils.createButton("Start Worker", self, 0, 2)
-        startWorker.released.connect(self._start_worker)
-        stopWorker = utils.createButton("Stop Worker", self, 0, 3)
-        stopWorker.released.connect(self._stop_worker)
+        startWorkerButton = utils.createButton("Start Worker", self, 0, 2)
+        startWorkerButton.released.connect(self._start_worker)
+        stopWorkerButton = utils.createButton("Stop Worker", self, 0, 3)
+        stopWorkerButton.released.connect(self._stop_worker)
 
         self.streamWindow = StreamWindow()
         self.isWindowShown = False;
