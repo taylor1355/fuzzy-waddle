@@ -13,7 +13,7 @@ class EnergyTab(QWidget):
 
         self.startTime = time.time()
 
-        self.timeLabel = utils.createLabelCText("3:00", self, 0, 0)
+        self.timeLabel = utils.createLabel("3:00", self, 0, 0)
         self.startTimerButton = utils.createButton("Start", self, 1, 0)
         self.startTimerButton.released.connect(self._start_timer)
         self.resetTimerButton = utils.createButton("Reset", self, 2, 0)
@@ -60,11 +60,12 @@ class SoundItem():
         self.soundCheckBox = utils.createCheckBox("Enabled", parent, 0, y)
         self.soundCheckBox.stateChanged.connect(self._sound_checkbox_changed)
         self.isSoundEnabled = False
-        self.soundLabel = utils.createLabelCText("0:00", parent, 1, y)
+        self.soundLabel = utils.createLabel("0:00", parent, 1, y)
         self.timeToSound = 0
         self.editTimeButton = utils.createButton("Edit Time", parent, 2, y)
         self.editTimeButton.released.connect(self._edit_time_button_handler)
         self.numpad = Numpad(1)
+        # self.connect(self.numpad, SIGNAL("send_int(int)"), self._receive_numpad_int)
 
     def _sound_checkbox_changed(self, state):
         if state == Qt.Checked:
@@ -73,7 +74,17 @@ class SoundItem():
             self.isSound1Enabled = False
 
     def _edit_time_button_handler(self):
+        self.numpad.reset()
         self.numpad.show()
+
+    def _receive_numpad_int(self, value):
+        self.timeToSound = value
+        seconds = value % 100
+        minutes = val;ue / 100
+        if seconds >= 60:
+            seconds -= 60
+            minutes += 1
+        self.soundLabel.setText("%d" % int(minutes) + ":" + "%02.0d" % int(seconds))
 
 
 

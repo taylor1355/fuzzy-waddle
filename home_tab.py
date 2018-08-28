@@ -10,4 +10,4 @@ class HomeTab(QWidget):
     def __init__(self):
         super(HomeTab, self).__init__()
 
-        label = utils.createLabelCText ("Welcome", self, 0, 0)
+        label = utils.createLabel("Welcome", self, 0, 0)

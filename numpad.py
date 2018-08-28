@@ -16,26 +16,32 @@ class Numpad(QWidget):
         super(Numpad, self).__init__()
         self.type = type
         self.mapper = QSignalMapper(self)
-        self.outputLabel = utils.createLabelCText("0", self, 0, 0)
-        self.reset()
-        x, y, w, h = gap_width, gap_height, item_width * 3 + gap_width * 2, item_height
+        # if type == 0:
+        #     text = "0"
+        # else:
+        text = "0:00"
+        self.outputLabel = utils.createLabel(text, self, 0, 0)
+        x, y, w, h = gap_width, gap_height, item_width * 4 + gap_width * 3, item_height
         self.outputLabel.setGeometry(x, y, w, h)
         for x in range(3):
             for y in range(3):
                 self.createButton(str(x*3+y+1), x, y+1, x*3+y+1)
-        self.createButton("<-", 3, 0, -1)
-        self.createButton("Clear", 3, 1, -2)
-        self.createButton("Cancel", 3, 2, -3)
-        self.createButton("Enter", 3, 3, -4)
+        self.createButton("<-", 3, 1, -1)
+        self.createButton("Clear", 3, 2, -2)
+        self.createButton("Cancel", 3, 3, -3)
+        self.createButton("Enter", 3, 4, -4)
+        b = self.createButton("0", 0, 4, 0)
+        x, y = gap_width, gap_height + (4 * (gap_height + item_height))
+        b.setGeometry(x, y, item_width * 3 + gap_width * 2, item_height)
 
         self.connect(self.mapper, SIGNAL("mapped(int)"), self._int_mapped)
 
-        x, y = item_width * 4 + gap_width * 5, item_height * 4 + gap_height * 5
+        x, y = item_width * 4 + gap_width * 5, item_height * 5 + gap_height * 6
         self.setFixedSize(x, y)
         self.setWindowTitle("Numpad")
 
     def _int_mapped(self, value):
-        if value > 0:
+        if value >= 0:
             # number
             self.amnt = self.amnt * 10 + value
         elif value == -1:
@@ -50,8 +56,9 @@ class Numpad(QWidget):
             self.hide()
         elif value == -4:
             # enter
-            # send back val here
+            self.emit(SIGNAL("send_int(int)"), self.amnt)
             self.reset()
+            self.hide()
 
         # update the label
         if self.type == 0:
@@ -73,3 +80,4 @@ class Numpad(QWidget):
         button.setGeometry(x, y, item_width, item_height)
         self.connect(button, SIGNAL("released()"), self.mapper, SLOT("map()"))
         self.mapper.setMapping(button, id)
+        return button
