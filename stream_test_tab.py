@@ -1,5 +1,6 @@
-import sys, time
+import os, sys, time
 import pyautogui
+import cv2 as cv
 
 from game_window import GameWindow
 import direct_input
@@ -110,8 +111,11 @@ class ScreenshotThread(QThread):
         window = GameWindow("BLACK DESERT")
         window.move_to_foreground()
 
-        # point = window.rect.center()
-        # pyautogui.moveTo(point[0], point[1], duration=2)
 
         # take screenshot here
         print("taking screenshot")
+        frame = window.grab_frame()
+        screenshot_dir = "screenshots"
+        if not os.path.exists(screenshot_dir):
+            os.makedirs(screenshot_dir)
+        cv.imwrite(screenshot_dir + "/screenshot.jpg", frame)
