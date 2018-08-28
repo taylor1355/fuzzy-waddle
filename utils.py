@@ -39,3 +39,10 @@ def createLabelCText(text, parent, x, y):
     label = createLabel(text, parent, x, y)
     label.setAlignment(Qt.AlignCenter)
     return label
+
+def createCheckBox(text, parent, x, y):
+    checkBox = QCheckBox(text, parent)
+    x, y = origin_x + (x * (item_width + gap_width)), origin_y + (y * (item_height + gap_height))
+    checkBox.setGeometry(x, y, item_width, item_height)
+    checkBox.setFont(font)
+    return checkBox

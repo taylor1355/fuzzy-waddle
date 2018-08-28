@@ -2,9 +2,9 @@ import sys
 import ctypes
 
 import utils
-from home import HomeTab
-from energy import EnergyTab
-from stream_test import StreamTab
+from home_tab import HomeTab
+from energy_tab import EnergyTab
+from stream_test_tab import StreamTab
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
