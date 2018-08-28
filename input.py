@@ -28,11 +28,11 @@ def main():
 
     point = window.local_to_global((720, 360))
     pyautogui.moveTo(point[0], point[1], duration=2)
-    time.sleep(2)
+    #time.sleep(2)
 
-    pyautogui.mouseDown(button='right')
-    time.sleep(2)
-    pyautogui.mouseUp(button='right')
+    #pyautogui.mouseDown(button='right')
+    #time.sleep(2)
+    #pyautogui.mouseUp(button='right')
 
     cut_tree()
 
