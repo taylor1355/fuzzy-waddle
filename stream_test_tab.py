@@ -24,9 +24,13 @@ class StreamTab(QWidget):
         stopWorkerButton = utils.createButton("Stop Worker", self, 0, 3)
         stopWorkerButton.released.connect(self._stop_worker_button_handler)
 
+        takeScreenshotButton = utils.createButton("Take Screenshot", self, 0, 5)
+        takeScreenshotButton.released.connect(self._take_screenshot_button_handler)
+
         self.streamWindow = StreamWindow()
         self.isWindowShown = False;
         self.thread = StreamThread()
+        self.screeshotThread = ScreenshotThread()
 
         self.workerLabel = utils.createLabel("Worker is Sleeping", self, 0, 4)
         self.connect(self.thread, SIGNAL("send_back_qstring(QString)"), self._get_qstring)
@@ -51,6 +55,9 @@ class StreamTab(QWidget):
     def _stop_worker_button_handler(self):
         self.thread.terminate()
         self.workerLabel.setText("Worker is Sleeping")
+
+    def _take_screenshot_button_handler(self):
+        self.screeshotThread.start()
 
 
 class StreamWindow(QWidget):
@@ -89,3 +96,22 @@ class StreamThread(QThread):
             time.sleep(1)
             direct_input.ReleaseKey("R")
             time.sleep(1)
+
+
+
+class ScreenshotThread(QThread):
+    def __init__(self):
+        super(ScreenshotThread, self).__init__()
+
+    def __del__(self):
+        self.wait()
+
+    def run(self):
+        window = GameWindow("BLACK DESERT")
+        window.move_to_foreground()
+
+        # point = window.rect.center()
+        # pyautogui.moveTo(point[0], point[1], duration=2)
+
+        # take screenshot here
+        print("taking screenshot")
