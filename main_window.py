@@ -5,6 +5,7 @@ import utils
 from home_tab import HomeTab
 from energy_tab import EnergyTab
 from stream_test_tab import StreamTab
+from auto_fishing_tab import AutoFishingTab
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -20,6 +21,8 @@ class MainWindow(QDialog):
         tabWidget.addTab(homeTab, "Home")
         energyTab = EnergyTab()
         tabWidget.addTab(energyTab, "Energy")
+        autoFishTab = AutoFishingTab()
+        tabWidget.addTab(autoFishTab, "Auto Fish")
         streamTab = StreamTab()
         tabWidget.addTab(streamTab, "Stream Test")
 
