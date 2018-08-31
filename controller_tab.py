@@ -4,15 +4,7 @@ import cv2 as cv
 import numpy as np
 
 import utils
-from actions import Action
-import direct_input
-import input
-
-from game_window import GameWindow
-# from home_tab import HomeModule
-# from energy_tab import EnergyModule
-# from stream_test_tab import StreamModule
-from auto_fishing_tab import AutoFishingModule
+from controller_thread import MainController
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -54,38 +46,3 @@ class ControllerTab(QWidget):
     def _controller_finished_handler(self):
         self.controllerLabel.setText("Sleeping")
         self.startStopButton.setText("Start")
-
-
-class MainController(QThread):
-    def __init__(self):
-        super(MainController, self).__init__()
-        self.isActive = False
-        self.autoFishingModule = AutoFishingModule()
-
-    def __del__(self):
-        self.wait()
-
-    def quit(self):
-        self.isActive = False
-
-    def run(self):
-        self.isActive = True
-        window = GameWindow("BLACK DESERT")
-        window.move_to_foreground()
-
-        point = window.rect.center()
-        pyautogui.moveTo(point[0], point[1], duration=2)
-        while self.isActive:
-            # grab frame
-            frame = window.grab_frame()
-            # fill up queue
-            actions = self.autoFishingModule.getActions(frame)
-            # process queue
-            for action in actions:
-                if action:
-                    action.execute()
-                else:
-                    print("idle...")
-                    time.sleep(1)
-            print("sleeping")
-            time.sleep(1)
