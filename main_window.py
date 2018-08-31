@@ -2,7 +2,7 @@ import sys
 import ctypes
 
 import utils
-from home_tab import HomeTab
+from controller_tab import ControllerTab
 from energy_tab import EnergyTab
 from stream_test_tab import StreamTab
 from auto_fishing_tab import AutoFishingTab
@@ -17,8 +17,8 @@ class MainWindow(QDialog):
 
         tabWidget = QTabWidget()
 
-        homeTab = HomeTab()
-        tabWidget.addTab(homeTab, "Home")
+        controllerTab = ControllerTab()
+        tabWidget.addTab(controllerTab, "Controller")
         energyTab = EnergyTab()
         tabWidget.addTab(energyTab, "Energy")
         autoFishTab = AutoFishingTab()
@@ -31,6 +31,7 @@ class MainWindow(QDialog):
         self.setLayout(layout)
 
         self.setWindowTitle("Fuzzy Waddle v1.0")
+
 
 def is_admin():
     try: return ctypes.windll.shell32.IsUserAnAdmin()

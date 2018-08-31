@@ -36,10 +36,10 @@ def createLabel(text, parent, x, y):
     label.setAlignment(Qt.AlignCenter)
     return label
 
-# def createLabelCText(text, parent, x, y):
-#     label = createLabel(text, parent, x, y)
-#     label.setAlignment(Qt.AlignCenter)
-#     return label
+def createLabelLText(text, parent, x, y):
+    label = createLabel(text, parent, x, y)
+    label.setAlignment(Qt.AlignLeft | Qt.AlignVCenter)
+    return label
 
 def createCheckBox(text, parent, x, y):
     checkBox = QCheckBox(text, parent)
