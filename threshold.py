@@ -9,6 +9,7 @@ def main():
     elif not os.path.exists(sys.argv[1]):
         print("Image path doesn't exist")
         return
+    img_file_name = sys.argv[1].split(".")
 
     img = cv.imread(sys.argv[1])
     img = cv.medianBlur(img, 3)
@@ -28,7 +29,8 @@ def main():
             break
 
     img_file_name = sys.argv[1].split(".")
-    threshold_file_name = img_file_name[0] + "_mask.jpg"
+    threshold_file_name = "." + img_file_name[-2] + "_mask.jpg"
+    print(threshold_file_name)
     cv.imwrite(threshold_file_name, thresh)
 
 if __name__ == "__main__":
