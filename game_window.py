@@ -63,7 +63,7 @@ class GameWindow():
         with mss.mss() as sct:
             self.rect.update()
             monitor = {"top": self.rect.top, "left": self.rect.left, "width": self.rect.width, "height": self.rect.height}
-            return np.array(sct.grab(monitor))
+            return np.array(sct.grab(monitor))[:, :, :-1]
 
     def local_to_global(self, point):
         return np.array([point[0] + self.rect.left, point[1] + self.rect.top])
