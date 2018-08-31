@@ -1,6 +1,5 @@
 import cv2 as cv
-import sys
-import os
+import sys, os
 
 def main():
     if len(sys.argv) <= 1:

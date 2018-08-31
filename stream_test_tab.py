@@ -1,11 +1,10 @@
-import os, sys, time
+import os, sys, time, uuid
 import pyautogui
 import cv2 as cv
 
 from game_window import GameWindow
 import direct_input
 import input
-
 import utils
 
 from PySide2.QtGui import *
@@ -114,8 +113,8 @@ class ScreenshotThread(QThread):
 
         # take screenshot here
         print("taking screenshot")
-        frame = window.grab_frame()
         screenshot_dir = "screenshots"
         if not os.path.exists(screenshot_dir):
             os.makedirs(screenshot_dir)
-        cv.imwrite(screenshot_dir + "/screenshot.jpg", frame)
+        file_name = str(uuid.uuid4()) + ".jpg"
+        cv.imwrite(os.path.join(screenshot_dir, file_name), window.grab_frame())
