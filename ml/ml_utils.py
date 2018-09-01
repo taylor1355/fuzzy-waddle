@@ -31,6 +31,6 @@ def load_examples(dir):
     examples = []
     for file_name in os.listdir(dir):
         file = os.path.join(dir, file_name)
-        img = cv.pyrDown(cv.pyrDown(cv.imread(file)))
+        img = cv.pyrDown(cv.pyrDown(cv.pyrDown(cv.imread(file))))
         examples.append(img.ravel())
     return examples

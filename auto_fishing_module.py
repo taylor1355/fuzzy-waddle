@@ -1,4 +1,4 @@
-import sys, time
+import sys, os, time
 import pyautogui
 import cv2 as cv
 import numpy as np
@@ -7,12 +7,15 @@ from actions import Action
 import direct_input
 import input
 
-start_target_x = 574
+sys.path.append("ml")
+from ml.model import Model
+
+start_target_x = 575
 start_target_y = 222
 catch_target_x = 574
 catch_target_y = 205
 target_thresh = 5
-actions = True
+actions = False
 
 class AutoFishingModule():
     def __init__(self):
@@ -22,12 +25,15 @@ class AutoFishingModule():
         comp_path = "ref_images/fishing_space_bar.jpg"
         self.comp_img = cv.imread(comp_path, 0)
 
+        self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
+        self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
+
     def getActions(self, frame):
         self.lastFrame = frame
+        frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-        stream_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         method = cv.TM_SQDIFF
-        result = cv.matchTemplate(self.comp_img, stream_gray, method)
+        result = cv.matchTemplate(self.comp_img, frame_gray, method)
         mn, _, mnLoc, _ = cv.minMaxLoc(result)
         MPx, MPy = mnLoc
 
@@ -37,24 +43,22 @@ class AutoFishingModule():
         elif (MPx > catch_target_x - target_thresh and MPx < catch_target_x + target_thresh and MPy > catch_target_y - target_thresh and MPy < catch_target_y + target_thresh):
             state = 2
 
-        show_image = False
+        show_image = True
         if show_image:
-            stream_gray = cv.cvtColor(window, cv.COLOR_BGR2GRAY)
+            img = np.array(frame)
 
-            method = cv.TM_SQDIFF
-            result = cv.matchTemplate(self.comp_img, stream_gray, method)
-            mn, _, mnLoc, _ = cv.minMaxLoc(result)
-            MPx, MPy = mnLoc
-            trows,tcols = self.comp_img.shape[:2]
+            spacebar_region = self.region_of_interest(frame, start_target_x, start_target_y, self.spacebar_width, self.spacebar_height)
+            spacebar_detected = self.spacebar_model.predict(spacebar_region)
+
             font = cv.FONT_HERSHEY_SIMPLEX
-            if (state == 0):
-                cv.putText(self.stream_img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
-            elif (state == 1):
-                cv.putText(self.stream_img, "Space Bar Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
+            if (not spacebar_detected):
+                cv.putText(img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
+            else:
+                cv.putText(img, "Space Bar Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
 
-            print(str(MPx) + " " + str(MPy))
-            cv.rectangle(self.stream_img, (MPx, MPy), (MPx + tcols, MPy + trows), (0, 0, 255), 2)
-            cv.imshow("output", self.stream_img)
+            print(str(start_target_x) + " " + str(start_target_y))
+            cv.rectangle(img, (start_target_x, start_target_y), (start_target_x + self.spacebar_width, start_target_y + self.spacebar_height), (0, 0, 255), 2)
+            cv.imshow("output", img)
             cv.waitKey(0)
             cv.destroyAllWindows()
 
@@ -64,6 +68,9 @@ class AutoFishingModule():
             return [self.reelInFishAction]
         else:
             return []
+
+    def region_of_interest(self, img, min_x, min_y, width, height):
+        return img[min_y : min_y+height, min_x : min_x+width]
 
     def reelInFish(self):
         direct_input.PressKey("SPACE")

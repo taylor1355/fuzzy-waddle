@@ -99,7 +99,7 @@ def main():
     print()
 
     # Support Vector Machine (Linear)
-    c_param = Parameter("C Value", "C", [5**-2, 5**-1, 5**0, 5**1, 5**2], log_scale=True)
+    c_param = Parameter("C Value", "C", [1e-2, 1e-1, 1e0, 1e1, 1e2], log_scale=True)
     linear_svm_algo = Algorithm("Linear Support Vector Machine", [c_param], svm.SVC(kernel="linear"))
     analyze_algorithm(linear_svm_algo, curr_results_dir, train_X, train_y, X, y)
     print()

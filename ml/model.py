@@ -8,17 +8,19 @@ class Model:
         self.num_downscales = num_downscales
 
     def predict(self, img):
-        if img.shape[0] != box_size[0] or img_shape[1] != box_shape[1]:
+        if img.shape[0] != self.box_size[0] or img.shape[1] != self.box_size[1]:
             print("Invalid box size for prediction")
             return None
         downscaled = img
         for level in range(self.num_downscales):
+            print(downscaled.shape)
             downscaled = cv.pyrDown(downscaled)
-
-        return self.estimator.predict(downscaled)
+        print(downscaled.shape)
+        return self.estimator.predict(downscaled.reshape(1,-1)) == 1
 
     def save(self, path):
         joblib.dump(self, path)
 
     def load(path):
+        print(path)
         return joblib.load(path)
