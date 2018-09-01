@@ -105,3 +105,6 @@ venv.bak/
 
 # Images
 /screenshots
+
+# Machine Learning Output
+/results
