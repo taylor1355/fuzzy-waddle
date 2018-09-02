@@ -62,22 +62,22 @@ class Parameter:
 
 def main():
     if len(sys.argv) < 2:
-        print("Usage: {} <data directory>".format(sys.argv[0]))
+        print("Usage: {} <task directory>".format(sys.argv[0]))
         return
 
-    data_dir = sys.argv[1]
-    task_dir = os.path.join(data_dir, "..")
+    task_dir = sys.argv[1]
+    data_dir = os.path.join(task_dir, "data")
 
     X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(data_dir, TEST_FRACTION)
     curr_results_dir = os.path.join(task_dir, "results")
 
-    # Boosted Decision Tree
-    num_estimators_param = Parameter("Max Number of Estimators", "n_estimators", range(1, 121, 10))
-    base_estimators = [DecisionTreeClassifier(max_depth=d) for d in range(1, 6)]
-    estimator_depth_param = Parameter("Max Tree Depth", "base_estimator", base_estimators, range(1, 6))
-    boosted_algo = Algorithm("Boosted Decision Tree", [num_estimators_param, estimator_depth_param], AdaBoostClassifier())
-    analyze_algorithm(boosted_algo, curr_results_dir, train_X, train_y, X, y)
-    print()
+    # # Boosted Decision Tree
+    # num_estimators_param = Parameter("Max Number of Estimators", "n_estimators", range(10, 111, 10))
+    # base_estimators = [DecisionTreeClassifier(max_depth=d) for d in range(2, 6)]
+    # estimator_depth_param = Parameter("Max Tree Depth", "base_estimator", base_estimators, range(1, 6))
+    # boosted_algo = Algorithm("Boosted Decision Tree", [num_estimators_param, estimator_depth_param], AdaBoostClassifier())
+    # analyze_algorithm(boosted_algo, curr_results_dir, train_X, train_y, X, y)
+    # print()
 
     # Random Forest
     num_estimators_param = Parameter("Number of Estimators", "n_estimators", range(1, 121, 10))

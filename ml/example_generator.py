@@ -2,33 +2,26 @@ import sys, os, uuid, random
 import cv2 as cv
 
 def main():
-    if len(sys.argv) != 6 and len(sys.argv) != 8:
-        print("Positive Example Usage: python {} <screenshot(s) path> <destination path> <samples / img> <row> <column> <width> <height>".format(sys.argv[0]))
-        print("Negative Example Usage: python {} <screenshot(s) path> <destination path> <samples / img> <width> <height>".format(sys.argv[0]))
+    if len(sys.argv) != 7:
+        print("Usage: python {} <task path> <num examples> <row> <column> <width> <height>".format(sys.argv[0]))
         return
 
-    path = sys.argv[1]
-    files = []
-    if os.path.isdir(path):
-        for file_name in os.listdir(path):
-            file = os.path.join(path, file_name)
-            if is_img_file(file):
-                files.append(file)
-    else:
-        files.append(path)
+    task_dir = sys.argv[1]
+    screenshot_dir = os.path.join(task_dir, "screenshots")
+    data_dir = os.path.join(task_dir, "data")
+    positive_img_files = grab_img_files(os.path.join(screenshot_dir, "positive"))
+    negative_img_files = grab_img_files(os.path.join(screenshot_dir, "negative"))
 
-    if len(sys.argv) == 6:
-        generate_negative_examples(files)
-    else:
-        generate_positive_examples(files)
+    num_examples = int((int(sys.argv[2]) + 1) / 2)
+    row, col = int(sys.argv[3]), int(sys.argv[4])
+    width, height = int(sys.argv[5]), int(sys.argv[6])
 
-def generate_positive_examples(files):
-    destination_dir = sys.argv[2]
-    num_samples = int(sys.argv[3])
-    row = int(sys.argv[4])
-    col = int(sys.argv[5])
-    width = int(sys.argv[6])
-    height = int(sys.argv[7])
+    generate_positive_examples(positive_img_files, data_dir, num_examples, row, col, width, height)
+    generate_negative_examples(negative_img_files, data_dir, num_examples, width, height)
+
+def generate_positive_examples(files, screenshot_dir, num_examples, row, col, width, height):
+    destination_dir = os.path.join(screenshot_dir, "positive")
+    num_samples = max(1, int(num_examples / len(files)))
 
     for file in files:
         img = cv.imread(file)
@@ -39,11 +32,9 @@ def generate_positive_examples(files):
             shifted_col = col + int(radius * random.random() * width) * random.choice([-1, 1])
             write_example(img, destination_dir, shifted_row, shifted_col, width, height)
 
-def generate_negative_examples(files):
-    destination_dir = sys.argv[2]
-    num_samples = int(sys.argv[3])
-    width = int(sys.argv[4])
-    height = int(sys.argv[5])
+def generate_negative_examples(files, screenshot_dir, num_examples, width, height):
+    destination_dir = os.path.join(screenshot_dir, "negative")
+    num_samples = max(1, int(num_examples / len(files)))
 
     for file in files:
         img = cv.imread(file)
@@ -60,6 +51,14 @@ def write_example(img, destination_dir, row, col, width, height):
         subsection = img[row : row+height, col : col+width, :]
         file_name = str(uuid.uuid4()) + ".jpg"
         cv.imwrite(os.path.join(destination_dir, file_name), subsection)
+
+def grab_img_files(dir):
+    files = []
+    for file_name in os.listdir(dir):
+        file = os.path.join(dir, file_name)
+        if is_img_file(file):
+            files.append(file)
+    return files
 
 def is_img_file(file):
     extensions = ["bmp", "jpeg", "jpg", "png"]

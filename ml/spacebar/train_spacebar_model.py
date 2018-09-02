@@ -19,9 +19,6 @@ def main():
     box_size = (65, 150)
     small_box_size = (16, 37)
 
-    X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(os.path.join(my_dir, "data/"), 0, flatten=False)
-    print(X.shape)
-
     spacebar_model = model.Model(estimator, box_size, small_box_size)
     spacebar_model.save(os.path.join(my_dir, "spacebar_model.pkl"))
 
