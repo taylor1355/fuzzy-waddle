@@ -27,7 +27,7 @@ def generate_positive_examples(files, screenshot_dir, num_examples, row, col, wi
         img = cv.imread(file)
 
         for i in range(num_samples):
-            radius = 0.2
+            radius = 0.125
             shifted_row = row + int(radius * random.random() * height) * random.choice([-1, 1])
             shifted_col = col + int(radius * random.random() * width) * random.choice([-1, 1])
             write_example(img, destination_dir, shifted_row, shifted_col, width, height)
@@ -42,12 +42,15 @@ def generate_negative_examples(files, screenshot_dir, num_examples, width, heigh
         img_height = img.shape[0]
 
         for i in range(num_samples):
-            row = random.randrange(img_height - height)
-            col = random.randrange(img_width - width)
+            if img_width == width and img_height == height:
+                row, col = 0, 0
+            else:
+                row = random.randrange(img_height - height)
+                col = random.randrange(img_width - width)
             write_example(img, destination_dir, row, col, width, height)
 
 def write_example(img, destination_dir, row, col, width, height):
-    if in_bounds(img, row + height, col + width):
+    if in_bounds(img, row + height - 1, col + width - 1):
         subsection = img[row : row+height, col : col+width, :]
         file_name = str(uuid.uuid4()) + ".jpg"
         cv.imwrite(os.path.join(destination_dir, file_name), subsection)

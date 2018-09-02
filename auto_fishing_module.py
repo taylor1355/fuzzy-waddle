@@ -77,7 +77,7 @@ class AutoFishingModule():
 
             cv.rectangle(img, (start_target_x, 200), (start_target_x + self.spacebar_width, 320), (255,0,0), 1)
             cv.imshow("output", img)
-            cv.waitKey(2000)
+            cv.waitKey(1000)
 
         if not do_actions:
             return []
