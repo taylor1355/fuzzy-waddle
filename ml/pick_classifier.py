@@ -33,7 +33,7 @@ class Algorithm:
 
     def optimize_params(self, model, X, y, dir):
         param_grid = {param.actual_name: param.values for param in self.params}
-        grid_search = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=-1)
+        grid_search = GridSearchCV(estimator=model, param_grid=param_grid, n_jobs=1)
         grid_search.fit(X, y)
 
         return grid_search
@@ -91,13 +91,6 @@ def main():
     analyze_algorithm(bayes_algo, curr_results_dir, train_X, train_y, X, y)
     print()
 
-    # Neural Network
-    hidden_layer_param = Parameter("Number of Hidden Layers", "hidden_layer_sizes", vary_num_hidden_layers(40, 6), range(1, 7))
-    alpha_param = Parameter("Regularization Strength (alpha)", "alpha", [1e-2, 1e-3, 1e-4, 1e-5, 1e-6], log_scale=True)
-    nn_algo = Algorithm("Neural Network", [hidden_layer_param, alpha_param], MLPClassifier(max_iter=5000))
-    analyze_algorithm(nn_algo, curr_results_dir, train_X, train_y, X, y)
-    print()
-
     # Support Vector Machine (Linear)
     c_param = Parameter("C Value", "C", [1e-2, 1e-1, 1e0, 1e1, 1e2], log_scale=True)
     linear_svm_algo = Algorithm("Linear Support Vector Machine", [c_param], svm.SVC(kernel="linear"))
@@ -113,6 +106,14 @@ def main():
     lda_algo = Algorithm("Linear Discriminant Analysis", [], LinearDiscriminantAnalysis())
     analyze_algorithm(lda_algo, curr_results_dir, train_X, train_y, X, y)
     print()
+
+    # Neural Network
+    hidden_layer_param = Parameter("Number of Hidden Layers", "hidden_layer_sizes", vary_num_hidden_layers(40, 6), range(1, 7))
+    alpha_param = Parameter("Regularization Strength (alpha)", "alpha", [1e-2, 1e-3, 1e-4, 1e-5, 1e-6], log_scale=True)
+    nn_algo = Algorithm("Neural Network", [hidden_layer_param, alpha_param], MLPClassifier(max_iter=5000))
+    analyze_algorithm(nn_algo, curr_results_dir, train_X, train_y, X, y)
+    print()
+
 
 def analyze_algorithm(algorithm, dir, train_X, train_y, X, y):
     start_time = timer()
@@ -156,7 +157,7 @@ def plot_learning_curve(estimator, title, X, y, split):
     steps = 6
     train_sizes = [(i+1)/steps for i in range(steps)]
     train_sizes, train_scores, test_scores = learning_curve(
-        estimator, X, y, cv=split, n_jobs=-1, train_sizes=train_sizes)
+        estimator, X, y, cv=split, n_jobs=1, train_sizes=train_sizes)
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
@@ -186,7 +187,7 @@ def plot_validation_curve(estimator, param, title, X, y):
     param_numeric_values = param.values if param.numeric_values is None else param.numeric_values
     train_scores, test_scores = validation_curve(
         estimator, X, y, param_name=param.actual_name, param_range=param.values,
-        cv=CV_FOLDS, scoring="accuracy", n_jobs=-1)
+        cv=CV_FOLDS, scoring="accuracy", n_jobs=1)
     train_scores_mean = np.mean(train_scores, axis=1)
     train_scores_std = np.std(train_scores, axis=1)
     test_scores_mean = np.mean(test_scores, axis=1)
