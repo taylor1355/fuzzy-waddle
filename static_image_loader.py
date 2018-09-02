@@ -7,22 +7,217 @@ import numpy as np
 target_x = 574
 target_y = 240
 target_thresh = 3
-pixel_thresh = 160
+pixel_thresh = 140
+
+class KeyDetector():
+    x, y, dx, dy = 463, 380, 30, 30
+    amnt = 1
+
+    def __init__(self, mask, pos):
+        self.mask = mask
+        self.x += pos * 25
+        self.w, self.h = self.mask.shape[1], self.mask.shape[0]
+        self.cntr = 0
+
+        self.normal_kernel = np.zeros((self.h, self.w), np.uint8)
+        self.mask_red = mask[:, :, 2] > pixel_thresh
+        self.normal_kernel[self.mask_red] = self.amnt
+
+        self.inverse_kernel = np.zeros((self.h, self.w), np.uint8)
+        self.mask_green = mask[:, :, 1] > pixel_thresh
+        self.inverse_kernel[self.mask_green] = self.amnt
+
+        self.normal_image = np.zeros((self.dx, self.dy), np.uint16)
+        self.inverse_image = np.zeros((self.dy, self.dx), np.uint16)
+
+    def processFrame(self, frame):
+        for i in range(0, self.dy):
+            for j in range(0, self.dx):
+                self.normal_image[i, j] += np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]) / 255
+        for i in range(self.dx):
+            for j in range(self.dy):
+                self.inverse_image[i, j] = np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.inverse_kernel[:, :]) / 255
+        self.cntr += 1
+
+    def getDifferenceImage(self):
+        if self.cntr > 0:
+            difference_image = np.zeros((self.dy, self.dx), np.uint8)
+            for i in range(self.dy):
+                for j in range(self.dx):
+                    difference_image[i, j] = np.clip((int(self.normal_image[i, j]) - int(self.inverse_image[i, j]) + 255) / self.cntr + 1, 0, 255)
+            return difference_image
+
+    def getMaxAndPos(self):
+        difference_image = self.getDifferenceImage()
+        max, max_x, max_y = 0, 0, 0
+        for i in range(self.dy):
+            for j in range(self.dx):
+                if difference_image[i, j] > max:
+                    max = difference_image[i, j]
+                    max_y, max_x = i, j
+        return max, max_x, max_y
+
 
 class Runs():
 
+    def run6():
+        mask_path = "ref_images/combined_key_color.tiff"
+        window_path = "screenshots/keys_img001.jpg"
+
+        mask = cv.imread(mask_path, 1)
+        frame = cv.imread(window_path, 0)
+        color_frame = cv.imread(window_path)
+
+        key_detectors = [KeyDetector(mask, 0), KeyDetector(mask, 1), KeyDetector(mask, 2), KeyDetector(mask, 3), KeyDetector(mask, 4), KeyDetector(mask, 5), KeyDetector(mask, 6), KeyDetector(mask, 7)]
+        for key_detector in key_detectors:
+            key_detector.processFrame(frame)
+        # if key_detector.cntr == 0:
+        #     print("Error: no images processed")
+        #     return
+
+        c = 1
+        for key_detector in key_detectors:
+            max, max_x, max_y = key_detector.getMaxAndPos()
+            mask_red = mask[:, :, 2] > pixel_thresh
+            h, w = mask.shape[0], mask.shape[1]
+            for i in range(h):
+                for j in range(w):
+                    if mask_red[i, j] > 0:
+                        color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x] = [255, 0, 0]
+            # cv.rectangle(color_frame, (key_detector.x, key_detector.y), (key_detector.x + w + key_detector.dx, key_detector.y + h + key_detector.dy), (255, 0, 0), 2)
+        cv.imshow("frame", color_frame)
+
+
+        # for i in range(h):
+        #     for j in range(w):
+        #         mask[i, j] = frame[y + i + max_y, x + j + max_x]
+        #
+        # cv.imshow("max_orig", mask)
+        #
+        # max_section = np.zeros((h + dy, w + dx, 3), np.uint8)
+        # for i in range(h + dy):
+        #     for j in range(w + dx):
+        #         max_section[i, j] = frame[y + i, x + j]
+        # cv.rectangle(max_section, (max_x, max_y), (max_x + w, max_y + h), (0, 0, 255), 2)
+        # cv.rectangle(max_section, (0, 0), (dx, dy), (255, 0, 0), 2)
+        # cv.imshow("max_section", max_section)
+        #
+        # max_normal = np.zeros((h, w, 3), np.uint8)
+        # max_inverse = np.zeros((h, w, 3), np.uint8)
+        # for i in range(h):
+        #     for j in range(w):
+        #         if mask_red[i, j] > 0:
+        #             max_normal[i, j] = frame[y + i + max_y, x + j + max_x]
+        #         elif mask_green[i, j] > 0:
+        #             max_inverse[i, j] = frame[y + i + max_y, x + j + max_x]
+        # cv.imshow("max_norm", max_normal)
+        # cv.imshow("max_inv", max_inverse)
+        #
+
+
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+
+
+
+
+
+
+
+
     def run5():
-        a = [[1, 2, 3, 4], [4, 5, 6, 7], [7, 8, 9, 10], [10, 11, 12, 13]]
-        b = [[2, 2], [2, 2]]
-        npa = np.array(a)
-        npb = np.array(b)
-        i = 1;
-        n = 2;
-        npc = np.zeros((3, 3), np.uint8)
-        for yy in range(3):
-            for xx in range(3):
-                npc[yy, xx] = np.sum(npa[yy:yy+2, xx:xx+2]*npb[:, :])
-        print(npc)
+        mask_path = "ref_images/w_key_color2.jpg"
+        window_path = "screenshots/keys_img002.jpg"
+
+        mask = cv.imread(mask_path, 1)
+        window = cv.imread(window_path, 0)
+
+        x, y, dx, dy, w, h, di = 463, 380, 6, 0, mask.shape[1], mask.shape[0], 1
+        x += dx
+        y += dy
+        amnt = 1
+
+        mask_new = np.zeros((h, w), np.uint8)
+        mask_red = mask[:, :, 2] > pixel_thresh
+        mask_new[mask_red] = amnt
+
+        normal_kernel = np.sum(window[y:y+h, x:x+w]*mask_new[:, :]) / 255
+        print("Normal Kernel:")
+        print(normal_kernel)
+        print("")
+
+        mask_inv = np.zeros((h, w), np.uint8)
+        mask_green = mask[:, :, 1] > pixel_thresh
+        mask_inv[mask_green] = amnt
+
+        inv_kernelp1 = np.sum(window[y:y+h, x:x+w]*mask_inv[:, :]) / 255
+        inv_kernelp2 = inv_kernelp1 * normal_kernel / 255
+        print("Inverse Kernel p1:")
+        print(inv_kernelp1)
+        print("")
+        print("Inverse Kernel p2:")
+        print(inv_kernelp2)
+        print("")
+        print("Window:")
+        print(window[y:y+h, x:x+w])
+        print("")
+        print("Mask:")
+        print(mask_inv[:, :])
+
+        # diff_image = np.zeros((dy, dx), np.uint8)
+        # for i in range(dy):
+        #     for j in range(dx):
+        #         diff_image[i, j] = np.clip((int(new_image[i, j]) - int(inv_image[i, j]) + 255) / 2, 0, 255)
+
+        # cv.imshow("norm", new_image)
+        # cv.imshow("inv", inv_image)
+        # cv.imshow("diff", diff_image)
+
+        # max, max_x, max_y = 0, 0, 0
+        # for i in range(dy):
+        #     for j in range(dx):
+        #         if diff_image[i, j] > max:
+        #             max = diff_image[i, j]
+        #             max_y, max_x = i, j
+        #         if inv_image[i, j] < 50:
+        #             print("y: " + str(i) + ", x: " + str(j) + ", v: " + str(inv_image[i, j]))
+        #
+        #
+        # for i in range(h):
+        #     for j in range(w):
+        #         mask[i, j] = window[y + i + max_y, x + j + max_x]
+        #
+        # cv.imshow("max_orig", mask)
+        #
+        # max_section = np.zeros((h + dy, w + dx, 3), np.uint8)
+        # for i in range(h + dy):
+        #     for j in range(w + dx):
+        #         max_section[i, j] = window[y + i, x + j]
+        # cv.rectangle(max_section, (max_x, max_y), (max_x + w, max_y + h), (0, 0, 255), 2)
+        # cv.rectangle(max_section, (0, 0), (dx, dy), (255, 0, 0), 2)
+        # cv.imshow("max_section", max_section)
+        #
+        # max_normal = np.zeros((h, w, 3), np.uint8)
+        # max_inverse = np.zeros((h, w, 3), np.uint8)
+        # for i in range(h):
+        #     for j in range(w):
+        #         if mask_red[i, j] > 0:
+        #             max_normal[i, j] = window[y + i + max_y, x + j + max_x]
+        #         elif mask_green[i, j] > 0:
+        #             max_inverse[i, j] = window[y + i + max_y, x + j + max_x]
+        # cv.imshow("max_norm", max_normal)
+        # cv.imshow("max_inv", max_inverse)
+        #
+        # for i in range(h):
+        #     for j in range(w):
+        #         if mask_red[i, j] > 0:
+        #             window[y + i + max_y, x + j + max_x] = [255, 0, 0]
+        # cv.rectangle(window, (x, y), (x + w + dx, y + h + dy), (255, 0, 0), 2)
+        #
+        # cv.imshow("window", window)
+
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()
 
     def convolution2d(image, kernel, bias):
         m, n, _ = kernel.shape
@@ -296,22 +491,111 @@ class Runs():
         cv.waitKey(0)
         cv.destroyAllWindows()
 
-    def hasNoBordered(img, y, x):
-        for yy in range(-1, 2):
-            for xx in range(-1, 2):
-                if img[y + yy, x + xx] > pixel_thresh:
-                    return False
+    def hasNoBordered(img, y, x, h=-1, w=-1):
+        for dy in range(-1, 2):
+            if y+dy > 0 and (h < 0 or y+dy < h):
+                for dx in range(-1, 2):
+                    if x+dx > 0 and (w < 0 or x+dx < w):
+                        if img[y + dy, x + dx] > pixel_thresh:
+                            return False
         return True
 
-    def mask_creator():
-        input_path = "screenshots/w_key2.jpg"
+    def image_combiner():
         output_folder = "ref_images"
-        output_name = "w_key_color2.jpg"
+        output_name = "combined_key_color.tiff"
+        input_folder = "ref_images/keys_orig/"
+        imgs = [cv.imread(input_folder + "w_key_centered.jpg", 1), cv.imread(input_folder + "a_key_centered.jpg", 1), cv.imread(input_folder + "s_key_centered.jpg", 1), cv.imread(input_folder + "d_key_centered.jpg", 1)]
+
+        thresh = 120
+        added_border = 2
+        w, h = 20, 40
+
+        # generate normal mask
+        out_img = np.zeros((h, w, 3), np.uint8)
+        mask_img = np.zeros((h, w), np.uint8)
+        for img in imgs:
+            mask = img[:, :, 2] > thresh
+            out_img[mask] = out_img[mask] + [0, 0, 50]
+            mask_img[mask] = 255
+
+        # generate inverse mask
+        has_bordering = np.zeros((h, w), np.uint8)
+        kernel = np.ones((3, 3), np.uint8)
+        for i in range(h):
+            for j in range(w):
+                if Runs.hasNoBordered(mask_img, i, j, h, w):
+                    out_img[i, j, 1] = 255
+
+        # clean up normal mask
+        for i in range(h):
+            for j in range(w):
+                v = out_img[i, j, 2]
+                if v > 25:
+                    if v < 75:
+                        out_img[i, j, 2] = 0
+                    else:
+                        out_img[i, j, 2] = 255
+
+        # shrink and add border
+        out_img_bigger = np.zeros((h + added_border * 2, w + added_border * 2, 3))
+        for i in range(-added_border, h + added_border):
+            for j in range(-added_border, w + added_border):
+                if i >= 0 and i < h and j >= 0 and j < w:
+                    out_img_bigger[i + added_border, j + added_border] = out_img[i, j]
+                else:
+                    out_img_bigger[i + added_border, j + added_border] = [0, 255, 0]
+
+        min_x, max_x, min_y, max_y = w, 0, h, 0
+        for yy in range(out_img_bigger.shape[0]):
+            for xx in range(out_img_bigger.shape[1]):
+                if out_img_bigger[yy, xx, 1] < thresh:
+                    if xx > max_x:
+                        max_x = xx
+                    if xx < min_x:
+                        min_x = xx
+                    if yy > max_y:
+                        max_y = yy
+                    if yy < min_y:
+                        min_y = yy
+        cut_left, cut_right = min_x - added_border, out_img_bigger.shape[1] - max_x - added_border - 1
+        cut_up, cut_down = min_y - added_border, out_img_bigger.shape[0] - max_y - added_border - 1
+        print(out_img_bigger.shape)
+        print(str(cut_left) + ", " + str(cut_right) + ", " + str(cut_up) + ", " + str(cut_down))
+
+        out_img_cropped = np.zeros((out_img_bigger.shape[0] - cut_up - cut_down, out_img_bigger.shape[1] - cut_left - cut_right, 3), np.uint8)
+        print(out_img_cropped.shape)
+        for i in range(out_img_cropped.shape[0]):
+            for j in range(out_img_cropped.shape[1]):
+                out_img_cropped[i, j] = out_img_bigger[i + cut_up, j + cut_left]
+
+        # write to file
+        if not os.path.exists(output_folder):
+            os.makedirs(output_folder)
+        cv.imwrite(output_folder + "/" + output_name, out_img_cropped)
+
+        # show if wanted
+        show_source = False
+        show_mask = True
+        if show_source:
+            c = 1
+            for img in imgs:
+                cv.imshow("img" + str(c), img)
+                c += 1
+        if show_mask:
+            cv.imshow("out", out_img_cropped)
+        if show_source or show_mask:
+            cv.waitKey(0)
+            cv.destroyAllWindows()
+
+    def mask_creator():
+        input_path = "ref_images/keys_orig/d_key_mask.jpg"
+        output_folder = "ref_images"
+        output_name = "d_key_color.jpg"
         thresh = 127
 
         added_border = 2
 
-        show_source = False
+        show_source = True
         show_mask = True
 
         input = cv.imread(input_path, 0)
@@ -358,4 +642,4 @@ class Runs():
 
 
 if __name__ == "__main__":
-    Runs.run4()
+    Runs.run6()
