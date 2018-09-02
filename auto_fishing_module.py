@@ -17,8 +17,8 @@ start_target_x = 575
 start_target_y = 256
 catch_target_x = 575
 catch_target_y = 243
-do_actions = True
-show_image = False
+do_actions = False
+show_image = True
 
 class AutoFishingModule():
     def __init__(self):
@@ -77,7 +77,7 @@ class AutoFishingModule():
 
             cv.rectangle(img, (start_target_x, 200), (start_target_x + self.spacebar_width, 320), (255,0,0), 1)
             cv.imshow("output", img)
-            cv.waitKey(0)
+            cv.waitKey(2000)
 
         if not do_actions:
             return []

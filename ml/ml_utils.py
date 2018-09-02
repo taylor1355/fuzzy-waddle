@@ -27,6 +27,18 @@ def load_data(data_dir, test_fraction, flatten=True):
     train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=test_fraction)
     return X, y, train_X, train_y, test_X, test_y
 
+#def load_data(task_dir, test_fraction, flatten=True):
+    # get class: label map
+
+    # load examples from data directories, put into data
+    # shuffle data
+
+    # get num examples
+
+    # put data into X, y
+
+    # return
+
 def load_examples(dir, flatten):
     examples = []
     for file_name in os.listdir(dir):
