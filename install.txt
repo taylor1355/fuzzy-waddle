@@ -12,5 +12,5 @@ cmd > 'pip install [pacakge_name.whl]'
 'pip show PySide2' to verify installation
 
 Machine Learning:
-pip install scikit-learn
 pip install scipy
+pip install scikit-learn
