@@ -225,9 +225,11 @@ class Runs():
         masks_folder = "ref_images/"
         masks = [cv.imread(masks_folder + "w_key_color.tiff", 1), cv.imread(masks_folder + "a_key_color.tiff", 1), cv.imread(masks_folder + "s_key_color.tiff", 1), cv.imread(masks_folder + "d_key_color.tiff", 1)]
 
-        key_mapper = KeyMapper(masks, max_x, max_y, 0)
-        key_mapper.processFrame(frame)
-        print(key_mapper.getKey())
+        key_mappers = []
+        for i in range(7):
+            key_mappers.append(KeyMapper(masks, max_x, max_y, i))
+            key_mappers[i].processFrame(frame)
+        print(key_mappers[0].getKey())
 
         mask_red = mask[:, :, 2] > pixel_thresh
         h, w = mask.shape[0], mask.shape[1]

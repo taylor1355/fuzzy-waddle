@@ -171,10 +171,14 @@ class CharacterDetectionThread(QThread):
         mask_path = "ref_images/combined_key_color.tiff"
         mask = cv.imread(mask_path, 1)
 
-        positions = 2
-        screenshots = 1
+        output = True
+        output_amnt = 5
+        output_folder = "ml/keys/data/"
 
-        show_amnt = 7
+        positions = 2
+        screenshots = 3
+
+        show_amnt = 5
 
         key_detectors = []
         for i in range(positions):
@@ -190,6 +194,20 @@ class CharacterDetectionThread(QThread):
         comb_frame = np.zeros((KeyDetectorDiff.dy, KeyDetectorDiff.dx), np.int16)
         for key_detector in key_detectors:
             comb_frame += key_detector.getDifferenceImage()
+
+        if output:
+            di = KeyDetectorDiff.di
+            max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
+            mask_red = mask[:, :, 2] > pixel_thresh
+            h, w = mask.shape[0], mask.shape[1]
+            for c in range(output_amnt):
+                out_file = np.zeros((h, w, 3), np.uint8)
+                out_file[:, :] = color_frame[key_detectors[0].y+max_y:key_detectors[0].y+max_y+h, key_detectors[0].x+max_x+(c * di):key_detectors[0].x+max_x+(c * di)+w]
+                print("writing to file")
+                if not os.path.exists(output_folder):
+                    os.makedirs(output_folder)
+                file_name = str(uuid.uuid4()) + ".jpg"
+                cv.imwrite(os.path.join(output_folder, file_name), out_file)
 
         if self.show_image:
             di = KeyDetectorDiff.di

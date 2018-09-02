@@ -8,6 +8,8 @@ from actions import Action
 import direct_input
 import input
 
+from stream_test_tab import CharacterDetectionThread
+
 sys.path.append("ml")
 from ml.model import Model
 
@@ -26,6 +28,11 @@ class AutoFishingModule():
 
         self.last_frame = None
         self.state = State.CAST
+
+        self.charDetectThread = CharacterDetectionThread()
+        self.charDetectThread.show_image = True
+        self.charDetectThread.show_border = True
+        self.charDetectThread.show_overlay = False
 
         self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
         self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
@@ -94,7 +101,10 @@ class AutoFishingModule():
         direct_input.PressKey("SPACE")
         print("playing game")
         direct_input.ReleaseKey("SPACE")
-        time.sleep(10)
+        time.sleep(2)
+        if output_chars:
+            self.charDetectThread.terminate()
+            self.charDetectThread.start()
 
     def castLine(self):
         direct_input.PressKey("SPACE")
