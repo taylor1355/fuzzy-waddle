@@ -8,6 +8,8 @@ from actions import Action
 import direct_input
 import input
 
+from stream_test_tab import CharacterDetectionThread
+
 sys.path.append("ml")
 from ml.model import Model
 
@@ -15,7 +17,7 @@ start_target_x = 575
 start_target_y = 256
 catch_target_x = 575
 catch_target_y = 243
-do_actions = False
+do_actions = True
 
 class AutoFishingModule():
     def __init__(self):
@@ -25,6 +27,11 @@ class AutoFishingModule():
 
         self.last_frame = None
         self.state = State.CAST
+
+        self.charDetectThread = CharacterDetectionThread()
+        self.charDetectThread.show_image = True
+        self.charDetectThread.show_border = True
+        self.charDetectThread.show_overlay = False
 
         self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
         self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
@@ -54,7 +61,7 @@ class AutoFishingModule():
             if self.spacebar_model.predict(cast_spacebar_region)[0]:
                 self.state = self.state.next()
 
-        show_image = True
+        show_image = False
         if show_image:
             img = np.array(frame)
 
@@ -89,7 +96,9 @@ class AutoFishingModule():
         direct_input.PressKey("SPACE")
         print("playing game")
         direct_input.ReleaseKey("SPACE")
-        time.sleep(10)
+        time.sleep(2)
+        self.charDetectThread.terminate()
+        self.charDetectThread.start()
 
     def castLine(self):
         direct_input.PressKey("SPACE")
