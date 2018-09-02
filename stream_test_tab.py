@@ -29,10 +29,15 @@ class StreamTab(QWidget):
         takeScreenshotButton = utils.createButton("Take Screenshot", self, 0, 5)
         takeScreenshotButton.released.connect(self._take_screenshot_button_handler)
 
-        charDetectionButton = utils.createButton("Detect Char", self, 0, 6)
+        charDetectionButton = utils.createButton("Detect Char", self, 2, 0)
         charDetectionButton.released.connect(self._char_detection_button_handler)
-        stopCharDetectionButton = utils.createButton("Stop Detect Char", self, 0, 7)
-        stopCharDetectionButton.released.connect(self._stop_char_detection_button_handler)
+        showImageCheckBox = utils.createCheckBox("Show Image", self, 2, 1)
+        showImageCheckBox.stateChanged.connect(self._show_image_check_box_handler)
+        showBorderCheckBox = utils.createCheckBox("Show Border", self, 2, 2)
+        showBorderCheckBox.stateChanged.connect(self._show_border_check_box_handler)
+        showOverlayCheckBox = utils.createCheckBox("Show Overlay", self, 2, 3)
+        showOverlayCheckBox.stateChanged.connect(self._show_overlay_check_box_handler)
+
 
         self.streamWindow = StreamWindow()
         self.isWindowShown = False;
@@ -71,8 +76,20 @@ class StreamTab(QWidget):
         self.charDetectionThread.terminate()
         self.charDetectionThread.start()
 
-    def _stop_char_detection_button_handler(self):
-        self.charDetectionThread.terminate()
+    def getBoolFromState(self, state):
+        if state == Qt.Checked:
+            return True
+        else:
+            return False
+
+    def _show_image_check_box_handler(self, state):
+        self.charDetectionThread.show_image = self.getBoolFromState(state)
+
+    def _show_border_check_box_handler(self, state):
+        self.charDetectionThread.show_border = self.getBoolFromState(state)
+
+    def _show_overlay_check_box_handler(self, state):
+        self.charDetectionThread.show_overlay = self.getBoolFromState(state)
 
 
 class StreamWindow(QWidget):
@@ -138,6 +155,9 @@ pixel_thresh = 140
 class CharacterDetectionThread(QThread):
     def __init__(self):
         super(CharacterDetectionThread, self).__init__()
+        self.show_image = False
+        self.show_border = False
+        self.show_overlay = False
 
     def __del__(self):
         self.wait()
@@ -154,7 +174,6 @@ class CharacterDetectionThread(QThread):
         positions = 2
         screenshots = 1
 
-        show_image = True
         show_amnt = 7
 
         key_detectors = []
@@ -172,7 +191,7 @@ class CharacterDetectionThread(QThread):
         for key_detector in key_detectors:
             comb_frame += key_detector.getDifferenceImage()
 
-        if show_image:
+        if self.show_image:
             di = KeyDetectorDiff.di
             max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
             mask_red = mask[:, :, 2] > pixel_thresh
@@ -180,8 +199,11 @@ class CharacterDetectionThread(QThread):
             for c in range(show_amnt):
                 for i in range(h):
                     for j in range(w):
-                        if mask_red[i, j] > 0:
-                            color_frame[key_detectors[0].y + i + max_y, key_detectors[0].x + j + max_x + 35 * c] = [255, 0, 0]
+                        if self.show_overlay and mask_red[i, j] > 0:
+                            color_frame[key_detectors[0].y + i + max_y, key_detectors[0].x + j + max_x + (c * di)] = [255, 0, 0]
+                        if self.show_border and (i < 2 or i >= h-2 or j < 2 or j >= w-2):
+                            color_frame[key_detectors[0].y + i + max_y, key_detectors[0].x + j + max_x + 35 * c] = [0, 0, 255]
+                # cv.rectangle(color_frame, (key_detectors[0].x + max_x + (c*35), key_detectors[0].y + max_y), (key_detectors[0].x + w + max_x + (c*35), key_detectors[0].y + h + max_y), (0, 0, 255), 2)
             cv.imshow("frame", color_frame)
             cv.waitKey(0)
             cv.destroyAllWindows()

@@ -46,5 +46,5 @@ def createCheckBox(text, parent, x, y):
     x, y = origin_x + (x * (item_width + gap_width)), origin_y + (y * (item_height + gap_height))
     checkBox.setGeometry(x, y, item_width, item_height)
     checkBox.setFont(font)
-    checkBox.setStyleSheet("margin-left:30%; margin-right:0%;")
+    # checkBox.setStyleSheet("margin-left:30%; margin-right:0%;")
     return checkBox
