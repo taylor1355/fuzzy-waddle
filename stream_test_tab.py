@@ -146,62 +146,93 @@ class CharacterDetectionThread(QThread):
 
         print("grabbing")
 
-        w_mask_path = "ref_images/w_key_color.jpg"
-        a_mask_path = "ref_images/w_key_color.jpg"
-        s_mask_path = "ref_images/w_key_color.jpg"
-        d_mask_path = "ref_images/w_key_color.jpg"
-        # window_path = "screenshots/keys_img004.jpg"
+        mask_path = "ref_images/combined_key_color.tiff"
+        mask = cv.imread(mask_path, 1)
 
-        w_mask = cv.imread(w_mask_path, 1)
-        a_mask = cv.imread(a_mask_path, 1)
-        s_mask = cv.imread(s_mask_path, 1)
-        d_mask = cv.imread(d_mask_path, 1)
-        # frame = cv.imread(window_path, 0)
-        # color_frame = cv.imread(window_path)
-        color_frame = window.grab_frame()
-        frame = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)
+        key_detectors = [KeyDetector(mask, 0), KeyDetector(mask, 1), KeyDetector(mask, 2), KeyDetector(mask, 3), KeyDetector(mask, 4), KeyDetector(mask, 5), KeyDetector(mask, 6), KeyDetector(mask, 7)]
+        weights = [10, 10, 2, 2, 1, 1, 1, 1]
 
-        w_key_detector = KeyDetector(w_mask, 0)
-        a_key_detector = KeyDetector(a_mask, 0)
-        s_key_detector = KeyDetector(s_mask, 0)
-        d_key_detector = KeyDetector(d_mask, 0)
-        for i in range(1):
-            w_key_detector.processFrame(frame)
-            a_key_detector.processFrame(frame)
-            s_key_detector.processFrame(frame)
-            d_key_detector.processFrame(frame)
-        # if w_key_detector.cntr == 0:
-        #     print("Error: no images processed")
-        #     return
+        for f in range(4):
+            color_frame = window.grab_frame()
+            frame = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)
+            for key_detector in key_detectors:
+                key_detector.processFrame(frame)
 
-        w_max, _, _ = w_key_detector.getMaxAndPos()
-        a_max, _, _ = a_key_detector.getMaxAndPos()
-        s_max, _, _ = s_key_detector.getMaxAndPos()
-        d_max, _, _ = d_key_detector.getMaxAndPos()
+            comb_frame = np.zeros((frame.shape[0], frame.shape[1]), np.int16)
+            for c in range(8):
+                comb_frame += key_detectors[c].getDifferenceImage() * weights[c]
+            print("min: " + str(np.min(comb_frame)) + ", max: " + str(np.max(comb_frame)))
 
-        max_x, max_y = 0, 0
-        if w_max > a_max and w_max > s_max and w_max > d_max:
-            _, max_x, max_y = w_key_detector.getMaxAndPos()
-            mask = w_mask
-        elif a_max > s_max and a_max > d_max:
-            _, max_x, max_y = a_key_detector.getMaxAndPos()
-            mask = a_mask
-        elif s_max > d_max:
-            _, max_x, max_y = s_key_detector.getMaxAndPos()
-            mask = s_mask
-        else:
-            _, max_x, max_y = d_key_detector.getMaxAndPos()
-            mask = d_mask
-
+        di = 35
+        max, max_x, max_y = KeyDetector.getMaxAndPos(comb_frame)
         mask_red = mask[:, :, 2] > pixel_thresh
         h, w = mask.shape[0], mask.shape[1]
-        for i in range(h):
-            for j in range(w):
-                if mask_red[i, j] > 0:
-                    frame[w_key_detector.y + i + max_y, w_key_detector.x + j + max_x] = 255
-        # cv.rectangle(color_frame, (w_key_detector.x, w_key_detector.y), (w_key_detector.x + w + w_key_detector.dx, w_key_detector.y + h + w_key_detector.dy), (255, 0, 0), 2)
-
-        print("finished grabbing")
-        cv.imshow("frame", frame)
+        for c in range(8):
+            for i in range(h):
+                for j in range(w):
+                    if mask_red[i, j] > 0:
+                        color_frame[key_detectors[c].y + i + max_y, key_detectors[c].x + j + max_x] = [255, 0, 0]
+            # cv.rectangle(color_frame, (key_detector.x, key_detector.y), (key_detector.x + w + key_detector.dx, key_detector.y + h + key_detector.dy), (255, 0, 0), 2)
+        cv.imshow("frame", color_frame)
         cv.waitKey(0)
         cv.destroyAllWindows()
+
+        # w_mask_path = "ref_images/w_key_color.jpg"
+        # a_mask_path = "ref_images/w_key_color.jpg"
+        # s_mask_path = "ref_images/w_key_color.jpg"
+        # d_mask_path = "ref_images/w_key_color.jpg"
+        # # window_path = "screenshots/keys_img004.jpg"
+        #
+        # w_mask = cv.imread(w_mask_path, 1)
+        # a_mask = cv.imread(a_mask_path, 1)
+        # s_mask = cv.imread(s_mask_path, 1)
+        # d_mask = cv.imread(d_mask_path, 1)
+        # # frame = cv.imread(window_path, 0)
+        # # color_frame = cv.imread(window_path)
+        # color_frame = window.grab_frame()
+        # frame = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)
+        #
+        # w_key_detector = KeyDetector(w_mask, 0)
+        # a_key_detector = KeyDetector(a_mask, 0)
+        # s_key_detector = KeyDetector(s_mask, 0)
+        # d_key_detector = KeyDetector(d_mask, 0)
+        # for i in range(1):
+        #     w_key_detector.processFrame(frame)
+        #     a_key_detector.processFrame(frame)
+        #     s_key_detector.processFrame(frame)
+        #     d_key_detector.processFrame(frame)
+        # # if w_key_detector.cntr == 0:
+        # #     print("Error: no images processed")
+        # #     return
+        #
+        # w_max, _, _ = w_key_detector.getMaxAndPos()
+        # a_max, _, _ = a_key_detector.getMaxAndPos()
+        # s_max, _, _ = s_key_detector.getMaxAndPos()
+        # d_max, _, _ = d_key_detector.getMaxAndPos()
+        #
+        # max_x, max_y = 0, 0
+        # if w_max > a_max and w_max > s_max and w_max > d_max:
+        #     _, max_x, max_y = w_key_detector.getMaxAndPos()
+        #     mask = w_mask
+        # elif a_max > s_max and a_max > d_max:
+        #     _, max_x, max_y = a_key_detector.getMaxAndPos()
+        #     mask = a_mask
+        # elif s_max > d_max:
+        #     _, max_x, max_y = s_key_detector.getMaxAndPos()
+        #     mask = s_mask
+        # else:
+        #     _, max_x, max_y = d_key_detector.getMaxAndPos()
+        #     mask = d_mask
+        #
+        # mask_red = mask[:, :, 2] > pixel_thresh
+        # h, w = mask.shape[0], mask.shape[1]
+        # for i in range(h):
+        #     for j in range(w):
+        #         if mask_red[i, j] > 0:
+        #             frame[w_key_detector.y + i + max_y, w_key_detector.x + j + max_x] = 255
+        # # cv.rectangle(color_frame, (w_key_detector.x, w_key_detector.y), (w_key_detector.x + w + w_key_detector.dx, w_key_detector.y + h + w_key_detector.dy), (255, 0, 0), 2)
+        #
+        # print("finished grabbing")
+        # cv.imshow("frame", frame)
+        # cv.waitKey(0)
+        # cv.destroyAllWindows()

@@ -15,15 +15,15 @@ class KeyDetector():
 
     def __init__(self, mask, pos):
         self.mask = mask
-        self.x += pos * 25
+        self.x += pos * 35
         self.w, self.h = self.mask.shape[1], self.mask.shape[0]
         self.cntr = 0
 
-        self.normal_kernel = np.zeros((self.h, self.w), np.uint8)
+        self.normal_kernel = np.zeros((self.h, self.w), np.uint16)
         self.mask_red = mask[:, :, 2] > pixel_thresh
         self.normal_kernel[self.mask_red] = self.amnt
 
-        self.inverse_kernel = np.zeros((self.h, self.w), np.uint8)
+        self.inverse_kernel = np.zeros((self.h, self.w), np.uint16)
         self.mask_green = mask[:, :, 1] > pixel_thresh
         self.inverse_kernel[self.mask_green] = self.amnt
 
@@ -33,32 +33,56 @@ class KeyDetector():
     def processFrame(self, frame):
         for i in range(0, self.dy):
             for j in range(0, self.dx):
-                self.normal_image[i, j] += np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]) / 255
+                self.normal_image[i, j] += int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]) / 255)
         for i in range(self.dx):
             for j in range(self.dy):
-                self.inverse_image[i, j] = np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.inverse_kernel[:, :]) / 255
+                self.inverse_image[i, j] += int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.inverse_kernel[:, :]) / 255)
         self.cntr += 1
 
     def getDifferenceImage(self):
         if self.cntr > 0:
-            difference_image = np.zeros((self.dy, self.dx), np.uint8)
+            difference_image = np.zeros((self.dy, self.dx), np.int16)
             for i in range(self.dy):
                 for j in range(self.dx):
-                    difference_image[i, j] = np.clip((int(self.normal_image[i, j]) - int(self.inverse_image[i, j]) + 255) / self.cntr + 1, 0, 255)
+                    difference_image[i, j] = int(self.normal_image[i, j]) - int(self.inverse_image[i, j]) + (127 * self.cntr)
             return difference_image
 
-    def getMaxAndPos(self):
-        difference_image = self.getDifferenceImage()
+    def normalize(frame):
+        normalized_frame = np.zeros((frame.shape[0], frame.shape[1]), np.uint8)
+        min, max = np.min(frame), np.max(frame)
+        print("min: " + str(min) + ", max: " + str(max))
+        div = (max - min) / 255
+        print(div)
+        normalized_frame[:, :] = (frame[:, :] - min) / div
+        return normalized_frame
+
+    # def getMaxAndPos(self):
+    #     max, max_x, max_y = 0, 0, 0
+    #         for j in range(self.dx):
+    #             if difference_image[i, j] > max:
+    #                 max = difference_image[i, j]
+    #                 max_y, max_x = i, j
+    #     return max, max_x, max_y
+    def getMaxAndPos(frame):
         max, max_x, max_y = 0, 0, 0
-        for i in range(self.dy):
-            for j in range(self.dx):
-                if difference_image[i, j] > max:
-                    max = difference_image[i, j]
+        for i in range(frame.shape[0]):
+            for j in range(frame.shape[1]):
+                if frame[i, j] > max:
+                    max = frame[i, j]
                     max_y, max_x = i, j
         return max, max_x, max_y
 
 
 class Runs():
+
+    def getMaxAndPos(frame):
+        max, max_x, max_y = 0, 0, 0
+        for i in range(frame.shape[0]):
+            for j in range(frame.shape[1]):
+                if frame[i, j] > max:
+                    max = frame[i, j]
+                    max_y, max_x = i, j
+        return max, max_x, max_y
 
     def run6():
         mask_path = "ref_images/combined_key_color.tiff"
@@ -69,21 +93,32 @@ class Runs():
         color_frame = cv.imread(window_path)
 
         key_detectors = [KeyDetector(mask, 0), KeyDetector(mask, 1), KeyDetector(mask, 2), KeyDetector(mask, 3), KeyDetector(mask, 4), KeyDetector(mask, 5), KeyDetector(mask, 6), KeyDetector(mask, 7)]
-        for key_detector in key_detectors:
-            key_detector.processFrame(frame)
+        pre = "screenshots/fish_run/"
+        frames = [cv.imread(pre + "s1.jpg", 0), cv.imread(pre + "s2.jpg", 0), cv.imread(pre + "s3.jpg", 0), cv.imread(pre + "s4.jpg", 0), cv.imread(pre + "s5.jpg", 0), cv.imread(pre + "s6.jpg", 0), cv.imread(pre + "s7.jpg", 0), cv.imread(pre + "s8.jpg", 0)]
+        color_frame = cv.imread(pre + "s1.jpg", 1)
+        weights = [10, 10, 2, 2, 1, 1, 1, 1]
+        for frame in frames:
+            for key_detector in key_detectors:
+                key_detector.processFrame(frame)
         # if key_detector.cntr == 0:
         #     print("Error: no images processed")
         #     return
 
-        c = 1
-        for key_detector in key_detectors:
-            max, max_x, max_y = key_detector.getMaxAndPos()
-            mask_red = mask[:, :, 2] > pixel_thresh
-            h, w = mask.shape[0], mask.shape[1]
+        frame = key_detectors[0].getDifferenceImage()
+        comb_frame = np.zeros((frame.shape[0], frame.shape[1]), np.int16)
+        for c in range(8):
+            comb_frame += key_detectors[c].getDifferenceImage() * weights[c]
+        print("min: " + str(np.min(comb_frame)) + ", max: " + str(np.max(comb_frame)))
+
+        di = 35
+        max, max_x, max_y = Runs.getMaxAndPos(comb_frame)
+        mask_red = mask[:, :, 2] > pixel_thresh
+        h, w = mask.shape[0], mask.shape[1]
+        for c in range(8):
             for i in range(h):
                 for j in range(w):
                     if mask_red[i, j] > 0:
-                        color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x] = [255, 0, 0]
+                        color_frame[key_detectors[c].y + i + max_y, key_detectors[c].x + j + max_x] = [255, 0, 0]
             # cv.rectangle(color_frame, (key_detector.x, key_detector.y), (key_detector.x + w + key_detector.dx, key_detector.y + h + key_detector.dy), (255, 0, 0), 2)
         cv.imshow("frame", color_frame)
 
