@@ -208,6 +208,20 @@ class CharacterDetectionThread(QThread):
                     os.makedirs(output_folder)
                 file_name = str(uuid.uuid4()) + ".jpg"
                 cv.imwrite(os.path.join(output_folder, file_name), out_file)
+            out_file = np.zeros((key_detectors[0].h+key_detectors[0].dy, key_detectors[0].w+key_detectors[0].dx, 3), np.uint8)
+            out_file[:, :] = color_frame[key_detectors[0].y:key_detectors[0].y+h+key_detectors[0].dy, key_detectors[0].x:key_detectors[0].x+w+key_detectors[0].dx]
+            if True:
+                for i in range(h):
+                    for j in range(w):
+                        if self.show_overlay and mask_red[i, j] > 0:
+                            out_file[i + max_y, j + max_x] = [255, 0, 0]
+                        if self.show_border and (i < 2 or i >= h-2 or j < 2 or j >= w-2):
+                            out_file[i + max_y, j + max_x] = [0, 0, 255]
+            print("writing to file")
+            if not os.path.exists(output_folder):
+                os.makedirs(output_folder)
+            file_name = str(uuid.uuid4()) + ".jpg"
+            cv.imwrite(os.path.join(output_folder, file_name), out_file)
 
         if self.show_image:
             di = KeyDetectorDiff.di

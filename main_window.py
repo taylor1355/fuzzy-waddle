@@ -6,6 +6,7 @@ from controller_tab import ControllerTab
 from energy_tab import EnergyTab
 from stream_test_tab import StreamTab
 from auto_fishing_tab import AutoFishingTab
+from fish_training_tab import FishTab
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -25,6 +26,8 @@ class MainWindow(QDialog):
         tabWidget.addTab(autoFishTab, "Auto Fish")
         streamTab = StreamTab()
         tabWidget.addTab(streamTab, "Stream Test")
+        fishTab = FishTab()
+        tabWidget.addTab(fishTab, "Fish Data")
 
         layout = QVBoxLayout()
         layout.addWidget(tabWidget)
