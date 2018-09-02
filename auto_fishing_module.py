@@ -15,7 +15,8 @@ start_target_x = 575
 start_target_y = 256
 catch_target_x = 575
 catch_target_y = 243
-do_actions = False
+do_actions = True
+show_image = False
 
 class AutoFishingModule():
     def __init__(self):
@@ -35,15 +36,18 @@ class AutoFishingModule():
         cast_spacebar_region = self.region_of_interest(start_target_x, start_target_y, self.spacebar_width, self.spacebar_height)
         reel_spacebar_region = self.region_of_interest(catch_target_x, catch_target_y, self.spacebar_width, self.spacebar_height)
 
+        spacebar_prediction = self.predict_spacebar()
+        spacebar_detected = spacebar_prediction is not None
+
         actions = []
         if self.state == State.CAST:
             actions = [self.castLineAction]
             self.state = self.state.next()
         elif self.state == State.WAIT_AFTER_CAST:
-            if not self.spacebar_model.predict(cast_spacebar_region)[0]:
+            if not spacebar_detected:
                 self.state = self.state.next()
         elif self.state == State.WAIT_REEL:
-            if self.spacebar_model.predict(reel_spacebar_region)[0]:
+            if spacebar_detected:
                 self.state = self.state.next()
         elif self.state == State.REEL:
             actions = [self.reelInFishAction]
@@ -51,22 +55,16 @@ class AutoFishingModule():
         elif self.state == State.WAIT_KEYS or self.state == State.KEYS:
             self.state = self.state.next()
         elif self.state == State.WAIT_CAST:
-            if self.spacebar_model.predict(cast_spacebar_region)[0]:
+            if spacebar_detected:
                 self.state = self.state.next()
 
-        show_image = True
         if show_image:
             img = np.array(frame)
-
-            search_region = self.region_of_interest(start_target_x, 200, self.spacebar_width, 120)
-            spacebar_detected, prediction = self.spacebar_model.predict(search_region)
-            if spacebar_detected:
-                prediction = prediction + np.array([start_target_x, 200])
 
             font = cv.FONT_HERSHEY_SIMPLEX
             if (spacebar_detected):
                 cv.putText(img, "Space Bar Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
-                cv.rectangle(img, (prediction[0], prediction[1]), (prediction[0] + self.spacebar_width, prediction[1] + self.spacebar_height), (0, 0, 255), 2)
+                cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + self.spacebar_width, spacebar_prediction[1] + self.spacebar_height), (0, 0, 255), 2)
             else:
                 cv.putText(img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
 
@@ -77,6 +75,13 @@ class AutoFishingModule():
         if not do_actions:
             return []
         return actions
+
+    def predict_spacebar(self):
+        search_region = self.region_of_interest(start_target_x, 200, self.spacebar_width, 120)
+        spacebar_detected, prediction = self.spacebar_model.predict(search_region)
+        if spacebar_detected:
+            return prediction + np.array([start_target_x, 200])
+        return None
 
     def region_of_interest(self, min_x, min_y, width, height):
         return self.last_frame[min_y : min_y+height, min_x : min_x+width]
