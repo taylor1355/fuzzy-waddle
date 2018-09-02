@@ -18,6 +18,7 @@ start_target_y = 256
 catch_target_x = 575
 catch_target_y = 243
 do_actions = True
+output_chars = True
 
 class AutoFishingModule():
     def __init__(self):
@@ -97,8 +98,9 @@ class AutoFishingModule():
         print("playing game")
         direct_input.ReleaseKey("SPACE")
         time.sleep(2)
-        self.charDetectThread.terminate()
-        self.charDetectThread.start()
+        if output_chars:
+            self.charDetectThread.terminate()
+            self.charDetectThread.start()
 
     def castLine(self):
         direct_input.PressKey("SPACE")
