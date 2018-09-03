@@ -66,9 +66,7 @@ def main():
         return
 
     task_dir = sys.argv[1]
-    data_dir = os.path.join(task_dir, "data")
-
-    X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(data_dir, TEST_FRACTION)
+    X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(task_dir, TEST_FRACTION)
     curr_results_dir = os.path.join(task_dir, "results")
 
     # # Boosted Decision Tree

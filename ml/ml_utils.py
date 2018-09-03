@@ -2,42 +2,54 @@ import os, random
 from sklearn.model_selection import train_test_split
 import numpy as np
 import cv2 as cv
+import csv
 
-def load_data(data_dir, test_fraction, flatten=True):
-    positive_dir = os.path.join(data_dir, "positive")
-    negative_dir = os.path.join(data_dir, "negative")
+# def load_data(data_dir, test_fraction, flatten=True):
+#     positive_dir = os.path.join(data_dir, "positive")
+#     negative_dir = os.path.join(data_dir, "negative")
+#
+#     positive_examples = load_examples(positive_dir, flatten)
+#     negative_examples = load_examples(negative_dir, flatten)
+#
+#     num_features = positive_examples[0].size
+#     num_examples = len(positive_examples) + len(negative_examples)
+#
+#     data = []
+#     data.extend([(example, 1) for example in positive_examples])
+#     data.extend([(example, 0) for example in negative_examples])
+#     random.shuffle(data)
+#
+#     X = np.empty((num_examples,) + positive_examples[0].shape)
+#     y = np.empty((num_examples,))
+#     for row in range(len(data)):
+#         X[row] = data[row][0]
+#         y[row] = data[row][1]
 
-    positive_examples = load_examples(positive_dir, flatten)
-    negative_examples = load_examples(negative_dir, flatten)
+# train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=test_fraction)
+# return X, y, train_X, train_y, test_X, test_y
 
-    num_features = positive_examples[0].size
-    num_examples = len(positive_examples) + len(negative_examples)
+def load_data(task_dir, test_fraction, flatten=True):
+    classes = {}
+    with open(os.path.join(task_dir, "class_info.csv")) as class_info:
+        reader = csv.reader(class_info, delimiter = ",")
+        next(reader) # skip header line
+        for row in reader:
+            classes[row[0]] = int(row[1])
 
     data = []
-    data.extend([(example, 1) for example in positive_examples])
-    data.extend([(example, 0) for example in negative_examples])
+    for class_name in classes:
+        dir = os.path.join(task_dir, "data/", class_name)
+        data.extend((example, classes[class_name]) for example in load_examples(dir, flatten))
     random.shuffle(data)
 
-    X = np.empty((num_examples,) + positive_examples[0].shape)
-    y = np.empty((num_examples,))
+    X = np.empty((len(data),) + data[0][0].shape)
+    y = np.empty((len(data),))
     for row in range(len(data)):
         X[row] = data[row][0]
         y[row] = data[row][1]
 
     train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=test_fraction)
     return X, y, train_X, train_y, test_X, test_y
-
-#def load_data(task_dir, test_fraction, flatten=True):
-    # get class: label map
-
-    # load examples from data directories, put into data
-    # shuffle data
-
-    # get num examples
-
-    # put data into X, y
-
-    # return
 
 def load_examples(dir, flatten):
     examples = []
