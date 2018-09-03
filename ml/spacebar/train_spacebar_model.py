@@ -1,7 +1,4 @@
 import sys, os, random
-import numpy as np
-import cv2 as cv
-from sklearn import svm
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 
@@ -11,14 +8,11 @@ import ml_utils
 import model
 
 def main():
-    X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(os.path.join(my_dir, "data/"), 0)
+    X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(my_dir, 0)
     estimator = RandomForestClassifier(n_estimators=40 , max_depth=3)
     estimator.fit(X, y)
 
-    box_size = (65, 150)
-    small_box_size = (16, 37)
-
-    spacebar_model = model.Model(estimator, box_size, small_box_size)
+    spacebar_model = model.Model(estimator, my_dir)
     spacebar_model.save(os.path.join(my_dir, "spacebar_model.pkl"))
 
 if __name__ == "__main__":

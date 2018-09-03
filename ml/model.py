@@ -5,21 +5,30 @@ import cv2 as cv
 import ml_utils
 
 class Model:
-    def __init__(self, estimator, box_size, small_box_size):
+    def __init__(self, estimator, task_dir):
         self.estimator = estimator
-        self.box_size = box_size
-        self.small_box_size = small_box_size
+        settings = ml_utils.load_settings(task_dir)
+        box_width, box_height = settings["box_width"], settings["box_height"]
+        self.scale_factor = settings["downscale"]
+        self.box_size = (box_height, box_width)
+        self.small_box_size = (int(box_height * self.scale_factor), int(box_width * self.scale_factor))
 
     def predict(self, img):
+        if img.shape[0] != self.box_size[0] or img.shape[1] != self.box_size[1]:
+            print("Invalid image size for prediction")
+            return None
+
+        downscaled = ml_utils.downscale(img, self.scale_factor)
+        return self.estimator.predict(downscaled.reshape(1,-1))
+
+    def binary_predict(self, img):
         if img.shape[0] < self.box_size[0] or img.shape[1] < self.box_size[1]:
             print("Invalid image size for prediction")
             return None
 
-        downscaled = ml_utils.downscale(img)
-
+        downscaled = ml_utils.downscale(img, self.scale_factor)
         img_height, img_width = downscaled.shape[:2]
         box_height, box_width = self.small_box_size[:2]
-        scale_factor = 1/4
 
         overlap = 0.25
         horizontal_windows = self.get_windows(box_width, img_width, overlap)
@@ -30,7 +39,7 @@ class Model:
                 x, y = int(horizontal_windows[j]), int(vertical_windows[i])
                 region = downscaled[y : y + box_height, x : x + box_width]
                 if self.estimator.predict(region.reshape(1,-1)) == 1:
-                    predictions.append(np.array([x, y]) / scale_factor)
+                    predictions.append(np.array([x, y]) / self.scale_factor)
 
         if len(predictions) > 1:
             return True, np.mean(predictions, axis=0).astype(int)

@@ -4,42 +4,21 @@ import numpy as np
 import cv2 as cv
 import csv
 
-# def load_data(data_dir, test_fraction, flatten=True):
-#     positive_dir = os.path.join(data_dir, "positive")
-#     negative_dir = os.path.join(data_dir, "negative")
-#
-#     positive_examples = load_examples(positive_dir, flatten)
-#     negative_examples = load_examples(negative_dir, flatten)
-#
-#     num_features = positive_examples[0].size
-#     num_examples = len(positive_examples) + len(negative_examples)
-#
-#     data = []
-#     data.extend([(example, 1) for example in positive_examples])
-#     data.extend([(example, 0) for example in negative_examples])
-#     random.shuffle(data)
-#
-#     X = np.empty((num_examples,) + positive_examples[0].shape)
-#     y = np.empty((num_examples,))
-#     for row in range(len(data)):
-#         X[row] = data[row][0]
-#         y[row] = data[row][1]
-
-# train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=test_fraction)
-# return X, y, train_X, train_y, test_X, test_y
+def load_settings(task_dir):
+    settings = load_csv_dict(os.path.join(task_dir, "settings.csv"))
+    settings["box_width"] = int(settings["box_width"])
+    settings["box_height"] = int(settings["box_height"])
+    settings["downscale"] = float(settings["downscale"])
+    return settings
 
 def load_data(task_dir, test_fraction, flatten=True):
-    classes = {}
-    with open(os.path.join(task_dir, "class_info.csv")) as class_info:
-        reader = csv.reader(class_info, delimiter = ",")
-        next(reader) # skip header line
-        for row in reader:
-            classes[row[0]] = int(row[1])
+    downscale_factor = load_settings(task_dir)["downscale"]
+    classes = load_csv_dict(os.path.join(task_dir, "class_info.csv"))
 
     data = []
     for class_name in classes:
         dir = os.path.join(task_dir, "data/", class_name)
-        data.extend((example, classes[class_name]) for example in load_examples(dir, flatten))
+        data.extend((example, int(classes[class_name])) for example in load_examples(dir, flatten, downscale_factor))
     random.shuffle(data)
 
     X = np.empty((len(data),) + data[0][0].shape)
@@ -51,17 +30,26 @@ def load_data(task_dir, test_fraction, flatten=True):
     train_X, test_X, train_y, test_y = train_test_split(X, y, test_size=test_fraction)
     return X, y, train_X, train_y, test_X, test_y
 
-def load_examples(dir, flatten):
+def load_csv_dict(path):
+    dict = {}
+    with open(path) as file:
+        reader = csv.reader(file, delimiter = ",")
+        next(reader) # skip header line
+        for row in reader:
+            dict[row[0].strip()] = row[1].strip()
+    return dict
+
+def load_examples(dir, flatten, downscale_factor):
     examples = []
     for file_name in os.listdir(dir):
         file = os.path.join(dir, file_name)
-        img = downscale(cv.imread(file))
+        img = downscale(cv.imread(file), downscale_factor)
         if flatten:
             img = img.ravel()
         examples.append(img)
     return examples
 
-def downscale(img):
+def downscale(img, scale_factor):
     height, width = img.shape[:2]
-    small_height, small_width = int(height / 4), int(width / 4)
+    small_height, small_width = int(height * scale_factor), int(width * scale_factor)
     return cv.resize(img, (small_width, small_height), interpolation=cv.INTER_AREA)

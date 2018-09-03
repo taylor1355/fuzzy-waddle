@@ -36,13 +36,9 @@ class AutoFishingModule():
         self.charDetectThread.show_overlay = False
 
         self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
-        self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
 
     def getActions(self, frame):
         self.last_frame = frame
-        frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        cast_spacebar_region = self.region_of_interest(start_target_x, start_target_y, self.spacebar_width, self.spacebar_height)
-        reel_spacebar_region = self.region_of_interest(catch_target_x, catch_target_y, self.spacebar_width, self.spacebar_height)
 
         spacebar_prediction = self.predict_spacebar()
         spacebar_detected = spacebar_prediction is not None
@@ -69,14 +65,15 @@ class AutoFishingModule():
         if show_image:
             img = np.array(frame)
 
+            spacebar_height, spacebar_width = self.spacebar_model.box_size
             font = cv.FONT_HERSHEY_SIMPLEX
             if (spacebar_detected):
                 cv.putText(img, "Space Bar Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
-                cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + self.spacebar_width, spacebar_prediction[1] + self.spacebar_height), (0, 0, 255), 2)
+                cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + spacebar_width, spacebar_prediction[1] + spacebar_height), (0, 0, 255), 2)
             else:
                 cv.putText(img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
 
-            cv.rectangle(img, (start_target_x, 200), (start_target_x + self.spacebar_width, 320), (255,0,0), 1)
+            cv.rectangle(img, (start_target_x, 200), (start_target_x + spacebar_width, 320), (255,0,0), 1)
             cv.imshow("output", img)
             cv.waitKey(1000)
 
@@ -85,8 +82,9 @@ class AutoFishingModule():
         return actions
 
     def predict_spacebar(self):
-        search_region = self.region_of_interest(start_target_x, 200, self.spacebar_width, 120)
-        spacebar_detected, prediction = self.spacebar_model.predict(search_region)
+        spacebar_height, spacebar_width = self.spacebar_model.box_size
+        search_region = self.region_of_interest(start_target_x, 200, spacebar_width, 120)
+        spacebar_detected, prediction = self.spacebar_model.binary_predict(search_region)
         if spacebar_detected:
             return prediction + np.array([start_target_x, 200])
         return None

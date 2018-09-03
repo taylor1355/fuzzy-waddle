@@ -1,9 +1,11 @@
 import sys, os, uuid, random
 import cv2 as cv
 
+import ml_utils
+
 def main():
-    if len(sys.argv) != 7:
-        print("Usage: python {} <task path> <num examples> <row> <column> <width> <height>".format(sys.argv[0]))
+    if len(sys.argv) != 5:
+        print("Usage: python {} <task path> <num examples> <row> <column>".format(sys.argv[0]))
         return
 
     task_dir = sys.argv[1]
@@ -14,7 +16,9 @@ def main():
 
     num_examples = int((int(sys.argv[2]) + 1) / 2)
     row, col = int(sys.argv[3]), int(sys.argv[4])
-    width, height = int(sys.argv[5]), int(sys.argv[6])
+
+    settings = ml_utils.load_settings(task_dir)
+    width, height = settings["box_width"], settings["box_height"]
 
     generate_positive_examples(positive_img_files, data_dir, num_examples, row, col, width, height)
     generate_negative_examples(negative_img_files, data_dir, num_examples, width, height)
