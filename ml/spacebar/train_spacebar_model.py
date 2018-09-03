@@ -12,8 +12,7 @@ import model
 
 def main():
     X, y, train_X, train_y, test_X, test_y = ml_utils.load_data(os.path.join(my_dir, "data/"), 0)
-    #estimator = svm.SVC(kernel="linear", C=100)
-    estimator = RandomForestClassifier(n_estimators=60 , max_depth=3)
+    estimator = RandomForestClassifier(n_estimators=40 , max_depth=3)
     estimator.fit(X, y)
 
     box_size = (65, 150)
