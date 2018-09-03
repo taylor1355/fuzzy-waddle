@@ -19,6 +19,7 @@ catch_target_x = 575
 catch_target_y = 243
 do_actions = False
 show_image = True
+output_chars = False
 
 class AutoFishingModule():
     def __init__(self):
@@ -101,7 +102,7 @@ class AutoFishingModule():
         direct_input.PressKey("SPACE")
         print("playing game")
         direct_input.ReleaseKey("SPACE")
-        time.sleep(2)
+        time.sleep(4)
         if output_chars:
             self.charDetectThread.terminate()
             self.charDetectThread.start()
