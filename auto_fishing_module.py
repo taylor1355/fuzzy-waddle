@@ -3,12 +3,13 @@ import sys, os, time
 import pyautogui
 import cv2 as cv
 import numpy as np
+import random
 
 from actions import Action
 import direct_input
 import input
 
-from stream_test_tab import CharacterDetectionThread
+from fishing_key_sequence import KeySequenceDetector
 
 sys.path.append("ml")
 from ml.model import Model
@@ -17,8 +18,8 @@ start_target_x = 575
 start_target_y = 256
 catch_target_x = 575
 catch_target_y = 243
-do_actions = False
-show_image = True
+do_actions = True
+show_image = False
 output_chars = False
 
 class AutoFishingModule():
@@ -30,15 +31,16 @@ class AutoFishingModule():
         self.last_frame = None
         self.state = State.CAST
 
-        self.charDetectThread = CharacterDetectionThread()
-        self.charDetectThread.show_image = True
-        self.charDetectThread.show_border = True
-        self.charDetectThread.show_overlay = False
+        self.keySequenceDetector = KeySequenceDetector()
 
         self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
+        self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
 
     def getActions(self, frame):
         self.last_frame = frame
+        frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        cast_spacebar_region = self.region_of_interest(start_target_x, start_target_y, self.spacebar_width, self.spacebar_height)
+        reel_spacebar_region = self.region_of_interest(catch_target_x, catch_target_y, self.spacebar_width, self.spacebar_height)
 
         spacebar_prediction = self.predict_spacebar()
         spacebar_detected = spacebar_prediction is not None
@@ -65,26 +67,24 @@ class AutoFishingModule():
         if show_image:
             img = np.array(frame)
 
-            spacebar_height, spacebar_width = self.spacebar_model.box_size
             font = cv.FONT_HERSHEY_SIMPLEX
             if (spacebar_detected):
                 cv.putText(img, "Space Bar Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
-                cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + spacebar_width, spacebar_prediction[1] + spacebar_height), (0, 0, 255), 2)
+                cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + self.spacebar_width, spacebar_prediction[1] + self.spacebar_height), (0, 0, 255), 2)
             else:
                 cv.putText(img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
 
-            cv.rectangle(img, (start_target_x, 200), (start_target_x + spacebar_width, 320), (255,0,0), 1)
+            cv.rectangle(img, (start_target_x, 200), (start_target_x + self.spacebar_width, 320), (255,0,0), 1)
             cv.imshow("output", img)
-            cv.waitKey(1000)
+            cv.waitKey(0)
 
         if not do_actions:
             return []
         return actions
 
     def predict_spacebar(self):
-        spacebar_height, spacebar_width = self.spacebar_model.box_size
-        search_region = self.region_of_interest(start_target_x, 200, spacebar_width, 120)
-        spacebar_detected, prediction = self.spacebar_model.binary_predict(search_region)
+        search_region = self.region_of_interest(start_target_x, 200, self.spacebar_width, 120)
+        spacebar_detected, prediction = self.spacebar_model.predict(search_region)
         if spacebar_detected:
             return prediction + np.array([start_target_x, 200])
         return None
@@ -100,16 +100,37 @@ class AutoFishingModule():
         direct_input.PressKey("SPACE")
         print("playing game")
         direct_input.ReleaseKey("SPACE")
-        time.sleep(4)
-        if output_chars:
-            self.charDetectThread.terminate()
-            self.charDetectThread.start()
+        time.sleep(3)
+        self.keySequenceDetector.processFrames(2, 10)
+        keySequence = self.keySequenceDetector.getKeySequence()
+        print("keys: " + str(keySequence))
+        for key in keySequence:
+            self.tapKey(key)
+        time.sleep(3)
+        self.tapKey(4)
 
     def castLine(self):
         direct_input.PressKey("SPACE")
         print("casting line")
         direct_input.ReleaseKey("SPACE")
         time.sleep(5)
+
+    def tapKey(self, key):
+        sleep_time = 0.03 + np.clip(random.gauss(0.05, 0.01), 0, 0.05)
+        key_string = ""
+        if key == 0:
+            key_string = "W"
+        elif key == 1:
+            key_string = "A"
+        elif key == 2:
+            key_string = "S"
+        elif key == 3:
+            key_string = "D"
+        else:
+            key_string = "R"
+        direct_input.PressKey(key_string)
+        time.sleep(sleep_time)
+        direct_input.ReleaseKey(key_string)
 
 class State(Enum):
     CAST = 0

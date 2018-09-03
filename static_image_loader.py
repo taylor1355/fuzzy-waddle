@@ -186,7 +186,7 @@ class Runs():
 
     def run7():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img005.jpg"
+        window_path = "screenshots/keys_img001.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 0)
         color_frame = cv.imread(window_path)

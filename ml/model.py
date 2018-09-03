@@ -19,7 +19,7 @@ class Model:
             return None
 
         downscaled = ml_utils.downscale(img, self.scale_factor)
-        return self.estimator.predict(downscaled.reshape(1,-1))
+        return int(self.estimator.predict(downscaled.reshape(1,-1)))
 
     def binary_predict(self, img):
         if img.shape[0] < self.box_size[0] or img.shape[1] < self.box_size[1]:
