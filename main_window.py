@@ -1,4 +1,4 @@
-import sys
+import sys, random
 import ctypes
 
 import utils
