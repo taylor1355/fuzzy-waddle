@@ -2,7 +2,7 @@ from sklearn.externals import joblib
 import numpy as np
 import cv2 as cv
 
-import ml.ml_utils
+import ml_utils
 
 class Model:
     def __init__(self, estimator, task_dir):

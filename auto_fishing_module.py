@@ -17,7 +17,7 @@ from ml.model import Model
 start_target_x = 575
 start_target_y = 256
 catch_target_x = 575
-catch_target_y = 243
+catch_target_y = 240
 do_actions = True
 show_image = False
 output_chars = False
@@ -101,7 +101,7 @@ class AutoFishingModule():
         print("playing game")
         direct_input.ReleaseKey("SPACE")
         time.sleep(3)
-        self.keySequenceDetector.processFrames(2, 10)
+        self.keySequenceDetector.processFrames(2, 5)
         keySequence = self.keySequenceDetector.getKeySequence()
         print("keys: " + str(keySequence))
         for key in keySequence:

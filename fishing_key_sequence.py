@@ -10,7 +10,7 @@ from ml.model import Model
 
 pixel_thresh = 140
 output = True
-output_amnt = 6
+output_amnt = 8
 output_folder = "ml/keys_2/data/"
 output_border = True
 output_overlay = False
@@ -27,23 +27,27 @@ class KeySequenceDetector():
 
         self.keys_model = Model.load("ml/keys/keys_model.pkl")
 
-    def processFrames(self, pos=1, amnt=1):
+    def processFrames(self, pos=1, read_time=1):
         window = GameWindow("BLACK DESERT")
         window.move_to_foreground()
 
-        print("grabbing " + str(amnt) + " frames")
+        print("grabbing frames for " + str(read_time) + " seconds")
 
         mask_path = "ref_images/combined_key_color.tiff"
         mask = cv.imread(mask_path, 1)
 
-        show_amnt = 10
+        show_amnt = 6
 
         key_detectors = []
         for i in range(pos):
             key_detectors.append(KeyDetectorDiff(mask, i))
 
-        for f in range(amnt):
-            print("procressing frame " + str(f+1))
+        cut_time = time.time() + read_time
+
+        f = 0
+        while time.time() <= cut_time:
+            f += 1
+            print("procressing frame " + str(f))
             color_frame = window.grab_frame()
             frame = cv.cvtColor(color_frame, cv.COLOR_BGR2GRAY)
             for key_detector in key_detectors:
@@ -65,15 +69,16 @@ class KeySequenceDetector():
             h, w = mask.shape[0] + 2*output_pixel_border, mask.shape[1] + 2*output_pixel_border
             for c in range(output_amnt):
                 out_file = np.zeros((h, w, 3), np.uint8)
-                out_file[:, :] = color_frame[key_detectors[0].y+max_y-output_pixel_border:key_detectors[0].y+max_y+h+output_pixel_border, key_detectors[0].x+max_x+(c * di)-output_pixel_border:key_detectors[0].x+max_x+(c * di)+w+output_pixel_border]
+                out_file[:, :] = color_frame[key_detectors[0].y+max_y-output_pixel_border:key_detectors[0].y+max_y+h-output_pixel_border, key_detectors[0].x+max_x+(c * di)-output_pixel_border:key_detectors[0].x+max_x+(c * di)+w-output_pixel_border]
                 # print("writing to file")
                 if not os.path.exists(output_folder):
                     os.makedirs(output_folder)
                 file_name = str(uuid.uuid4()) + ".jpg"
                 cv.imwrite(os.path.join(output_folder, file_name), out_file)
             out_file = np.zeros((key_detectors[0].h+key_detectors[0].dy, key_detectors[0].w+key_detectors[0].dx, 3), np.uint8)
-            out_file[:, :] = color_frame[key_detectors[0].y:key_detectors[0].y+h+key_detectors[0].dy, key_detectors[0].x:key_detectors[0].x+w+key_detectors[0].dx]
+            out_file[:, :] = color_frame[key_detectors[0].y:key_detectors[0].y+h+key_detectors[0].dy-(2*output_pixel_border), key_detectors[0].x:key_detectors[0].x+w+key_detectors[0].dx-(2*output_pixel_border)]
 
+            h, w = mask.shape[0], mask.shape[1]
             norm_out = np.copy(out_file)
             inv_out = np.copy(out_file)
             diff_out = np.copy(out_file)
@@ -82,12 +87,12 @@ class KeySequenceDetector():
             for key_detector in key_detectors:
                 comb_norm += key_detector.normal_dev_image
                 comb_inv += key_detector.inverse_dev_image
-            normalized_norm = key_detector.normalize(comb_norm)
-            normalized_inv = key_detector.normalize(comb_inv)
-            normalized_diff = key_detector.normalize(comb_frame)
+            normalized_norm = KeyDetectorDiff.normalize(comb_norm)
+            normalized_inv = KeyDetectorDiff.normalize(comb_inv)
+            normalized_diff = KeyDetectorDiff.normalize(comb_frame)
             perc = 0.7
-            for i in range(h):
-                for j in range(w):
+            for i in range(normalized_norm.shape[0]):
+                for j in range(normalized_norm.shape[1]):
                     norm_out[i, j] = (norm_out[i, j] * (1 - perc)) + (normalized_norm[i, j] * perc)
                     inv_out[i, j] = (inv_out[i, j] * (1 - perc)) + (normalized_inv[i, j] * perc)
                     diff_out[i, j] = (diff_out[i, j] * (1 - perc)) + (normalized_diff[i, j] * perc)
@@ -102,10 +107,10 @@ class KeySequenceDetector():
             print("writing to file")
             if not os.path.exists(output_last_folder):
                 os.makedirs(output_last_folder)
-            cv.imwrite(os.path.join(output_last_folder, "masked.jpg"), out_file)
-            cv.imwrite(os.path.join(output_last_folder, "norm.jpg"), norm_out)
-            cv.imwrite(os.path.join(output_last_folder, "inv.jpg"), inv_out)
-            cv.imwrite(os.path.join(output_last_folder, "diff.jpg"), diff_out)
+            cv.imwrite(os.path.join(output_last_folder, "masked.tiff"), out_file)
+            cv.imwrite(os.path.join(output_last_folder, "norm.tiff"), norm_out)
+            cv.imwrite(os.path.join(output_last_folder, "inv.tiff"), inv_out)
+            cv.imwrite(os.path.join(output_last_folder, "diff.tiff"), diff_out)
 
         if self.show_image:
             di = KeyDetectorDiff.di

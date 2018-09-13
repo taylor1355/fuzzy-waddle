@@ -133,7 +133,6 @@ class KeyDetectorDiff():
                     max_y, max_x = i, j
         return max, max_x, max_y
 
-
 class KeyMapper():
     x, y, di = 463, 380, 35
     amnt = 1
@@ -182,7 +181,139 @@ class KeyMapper():
         return min_pos
 
 
+class KeyDetectorDiffColor():
+    x, y, dx, dy, di = 463, 380, 30, 30, 35
+    amnt = [1, 1, 1]
+
+    def __init__(self, mask, pos):
+        self.mask = mask
+        self.x += pos * self.di
+        self.w, self.h = self.mask.shape[1], self.mask.shape[0]
+        self.cntr = 0
+
+        self.normal_kernel = np.zeros((self.h, self.w, 3), np.uint8)
+        self.mask_red = mask[:, :, 2] > pixel_thresh
+        self.normal_kernel[self.mask_red] = self.amnt
+
+        self.inverse_kernel = np.zeros((self.h, self.w, 3), np.uint8)
+        self.mask_green = mask[:, :, 1] > pixel_thresh
+        self.inverse_kernel[self.mask_green] = self.amnt
+
+        self.normal_avg_image = np.zeros((self.dx, self.dy, 3), np.uint8)
+        self.normal_dev_image = np.zeros((self.dx, self.dy), np.int16)
+        self.inverse_dev_image = np.zeros((self.dy, self.dx), np.int16)
+
+    def processFrame(self, frame):
+        for i in range(0, self.dy):
+            for j in range(0, self.dx):
+                for c in range(3):
+                    self.normal_avg_image[i, j, c] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w, c]*self.normal_kernel[:, :, c]) / 255)
+        for i in range(0, self.dy):
+            for j in range(0, self.dx):
+                self.normal_dev_image[i, j] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w, :]*self.normal_kernel[:, :, :]-self.normal_avg_image[i, j, :]) / (3 * 255))
+                self.inverse_dev_image[i, j] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w, :]*self.inverse_kernel[:, :, :]-self.normal_avg_image[i, j, :]) / (3 * 255))
+        self.cntr += 1
+
+    def getDifferenceImage(self):
+        if self.cntr > 0:
+            difference_image = np.zeros((self.dy, self.dx), np.int16)
+            for i in range(self.dy):
+                for j in range(self.dx):
+                    difference_image[i, j] += int(1.2*self.inverse_dev_image[i, j]) - int(0.8*self.normal_dev_image[i, j]) + (127 * self.cntr)
+            return difference_image
+
+    def normalize(frame):
+        normalized_frame = np.zeros((frame.shape[0], frame.shape[1]), np.uint8)
+        min, max = np.min(frame), np.max(frame)
+        # print("min: " + str(min) + ", max: " + str(max))
+        div = (max - min) / 255
+        # print(div)
+        normalized_frame[:, :] = (frame[:, :] - min) / div
+        return normalized_frame
+
+    def getMaxAndPos(frame):
+        max, max_x, max_y = 0, 0, 0
+        for i in range(frame.shape[0]):
+            for j in range(frame.shape[1]):
+                if frame[i, j] > max:
+                    max = frame[i, j]
+                    max_y, max_x = i, j
+        return max, max_x, max_y
+
+
+
 class Runs():
+
+    def scale(frame, scale):
+        scale = int(scale)
+        out = np.zeros((frame.shape[0] * scale, frame.shape[1] * scale, frame.shape[2]), np.uint8)
+        for i in range(frame.shape[0]):
+            for j in range(frame.shape[1]):
+                out[i*scale:(i+1)*scale, j*scale:(j+1)*scale] = frame[i, j]
+        return out
+
+    def scale_gray(frame, scale):
+        scale = int(scale)
+        out = np.zeros((frame.shape[0] * scale, frame.shape[1] * scale), np.uint8)
+        for i in range(frame.shape[0]):
+            for j in range(frame.shape[1]):
+                out[i*scale:(i+1)*scale, j*scale:(j+1)*scale] = frame[i, j]
+        return out
+
+    def run8():
+        mask_path = "ref_images/combined_key_color.tiff"
+        window_path = "screenshots/keys_img002.jpg"
+        mask = cv.imread(mask_path, 1)
+        frame = cv.imread(window_path, 1)
+        color_frame = cv.imread(window_path)
+
+        key_detector = KeyDetectorDiffColor(mask, 0)
+        key_detector.processFrame(frame)
+
+        di = 35
+        comb_frame = key_detector.getDifferenceImage()
+        max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
+
+        avg_color = np.zeros((100, 100, 3), np.uint8)
+        avg_color[:, :] = key_detector.normal_avg_image[max_y, max_x]
+        cv.imshow("avg", avg_color)
+
+        norm_dev = KeyDetectorDiffColor.normalize(key_detector.normal_dev_image)
+        inv_dev = KeyDetectorDiffColor.normalize(key_detector.inverse_dev_image)
+        cv.imshow("norm mask", Runs.scale_gray(norm_dev, 10))
+        cv.imshow("inv mask", Runs.scale_gray(inv_dev, 10))
+        cv.imshow("diff mask", Runs.scale_gray(KeyDetectorDiffColor.normalize(comb_frame), 10))
+
+        h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
+        base_context = np.zeros((h, w, 3), np.uint8)
+        base_context[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
+        norm_context = np.copy(base_context)
+        inv_context = np.copy(base_context)
+        diff_context = np.copy(base_context)
+        cv.rectangle(base_context, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
+        base_context[max_y, max_x] = [0, 0, 255]
+
+        perc = 0.7
+        for i in range(norm_dev.shape[0]):
+            for j in range(norm_dev.shape[1]):
+                norm_context[i, j] = (norm_context[i, j] * (1 - perc)) + (norm_dev[i, j] * perc)
+                inv_context[i, j] = (inv_context[i, j] * (1 - perc)) + (inv_dev[i, j] * perc)
+        cv.imshow("norm context", Runs.scale(norm_context, 10))
+        cv.imshow("inv context", Runs.scale(inv_context, 10))
+        cv.imshow("base context", Runs.scale(base_context, 10))
+        color_avgs = key_detector.normal_avg_image
+        color_avgs[max_y, max_x] = [0, 0, 255]
+        cv.imshow("color avgs", Runs.scale(color_avgs, 10))
+
+        mask_red = mask[:, :, 2] > pixel_thresh
+        h, w = mask.shape[0], mask.shape[1]
+        for i in range(h):
+            for j in range(w):
+                if mask_red[i, j] > 0:
+                    color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x] = [255, 0, 0]
+        cv.imshow("frame", color_frame)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
     def run7():
         mask_path = "ref_images/combined_key_color.tiff"
@@ -867,4 +998,4 @@ class Runs():
 
 
 if __name__ == "__main__":
-    Runs.run7()
+    Runs.run8()
