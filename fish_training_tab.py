@@ -31,9 +31,9 @@ class FishTab(QWidget):
         self.thread.terminate()
 
 start_target_x = 574
-start_target_y = 253
+start_target_y = 225
 catch_target_x = 574
-catch_target_y = 236
+catch_target_y = 205
 target_thresh = 5
 actions = True
 output_chars = True
@@ -81,17 +81,17 @@ class StreamThread(QThread):
             direct_input.PressKey("SPACE")
             print("playing game")
             direct_input.ReleaseKey("SPACE")
-            time.sleep(3)
-            self.keySequenceDetector.processFrames(2, 8)
+            time.sleep(2.5)
+            self.keySequenceDetector.processFrames(2, 2)
             keySequence = self.keySequenceDetector.getKeySequence()
             print("keys: " + str(keySequence))
             for key in keySequence:
                 self.tapKey(key)
-            time.sleep(6)
+            time.sleep(4)
             self.tapKey(4)
 
     def sleep(self):
-        sleep_time = 0.03 + np.clip(random.gauss(0.03, 0.01), 0, 0.05)
+        sleep_time = 0.02 + np.clip(random.gauss(0.03, 0.01), 0, 0.06)
         time.sleep(sleep_time)
 
     def tapKey(self, key):
@@ -127,7 +127,7 @@ class StreamThread(QThread):
             if (actions):
                 if (state == 1):
                     self.actions(1)
-                    break
+                    # break
                 elif (state == 2):
                     self.actions(2)
 
