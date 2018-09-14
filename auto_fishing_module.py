@@ -84,7 +84,7 @@ class AutoFishingModule():
 
     def predict_spacebar(self):
         search_region = self.region_of_interest(start_target_x, 200, self.spacebar_width, 120)
-        spacebar_detected, prediction = self.spacebar_model.predict(search_region)
+        spacebar_detected, prediction = self.spacebar_model.binary_predict(search_region)
         if spacebar_detected:
             return prediction + np.array([start_target_x, 200])
         return None
