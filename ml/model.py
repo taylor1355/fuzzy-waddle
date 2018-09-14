@@ -12,16 +12,9 @@ class Model:
         self.scale_factor = settings["downscale"]
         self.box_size = (box_height, box_width)
         self.small_box_size = (int(box_height * self.scale_factor), int(box_width * self.scale_factor))
+        self.negative_class = settings["negative_class"]
 
     def predict(self, img):
-        if img.shape[0] != self.box_size[0] or img.shape[1] != self.box_size[1]:
-            print("Invalid image size for prediction")
-            return None
-
-        downscaled = ml_utils.downscale(img, self.scale_factor)
-        return int(self.estimator.predict(downscaled.reshape(1,-1)))
-
-    def binary_predict(self, img):
         if img.shape[0] < self.box_size[0] or img.shape[1] < self.box_size[1]:
             print("Invalid image size for prediction")
             return None
@@ -30,21 +23,29 @@ class Model:
         img_height, img_width = downscaled.shape[:2]
         box_height, box_width = self.small_box_size[:2]
 
-        overlap = 0.25
+        overlap = 0.2
         horizontal_windows = self.get_windows(box_width, img_width, overlap)
         vertical_windows = self.get_windows(box_height, img_height, overlap)
-        predictions = []
+        predictions = {}
         for i in range(len(vertical_windows)):
             for j in range(len(horizontal_windows)):
                 x, y = int(horizontal_windows[j]), int(vertical_windows[i])
                 region = downscaled[y : y + box_height, x : x + box_width]
-                if self.estimator.predict(region.reshape(1,-1)) == 1:
-                    predictions.append(np.array([x, y]) / self.scale_factor)
+                prediction = self.estimator.predict(region.reshape(1,-1))[0]
+                if prediction != self.negative_class:
+                    if prediction not in predictions:
+                        predictions[prediction] = []
+                    predictions[prediction].append(np.array([x, y]) / self.scale_factor)
 
-        if len(predictions) > 1:
-            return True, np.mean(predictions, axis=0).astype(int)
-        return False, None
+        best_class = None
+        for pred_class in predictions:
+            if best_class is None or len(predictions[pred_class]) > len(predictions[best_class]):
+                best_class = pred_class
 
+        if best_class is None:
+            return None, None
+        else:
+            return best_class, np.mean(predictions[best_class], axis=0).astype(int)
 
     def get_windows(self, window_length, img_length, overlap):
         offset = overlap * window_length
