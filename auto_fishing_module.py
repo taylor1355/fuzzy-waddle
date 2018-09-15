@@ -100,8 +100,8 @@ class AutoFishingModule():
         direct_input.PressKey("SPACE")
         print("playing game")
         direct_input.ReleaseKey("SPACE")
-        time.sleep(3)
-        self.keySequenceDetector.processFrames(2, 5)
+        time.sleep(2.5)
+        self.keySequenceDetector.processFrames(2, 2)
         keySequence = self.keySequenceDetector.getKeySequence()
         print("keys: " + str(keySequence))
         for key in keySequence:
@@ -115,8 +115,11 @@ class AutoFishingModule():
         direct_input.ReleaseKey("SPACE")
         time.sleep(5)
 
+    def sleep(self):
+        sleep_time = 0.02 + np.clip(random.gauss(0.03, 0.01), 0, 0.06)
+        time.sleep(sleep_time)
+
     def tapKey(self, key):
-        sleep_time = 0.03 + np.clip(random.gauss(0.05, 0.01), 0, 0.05)
         key_string = ""
         if key == 0:
             key_string = "W"
@@ -129,8 +132,9 @@ class AutoFishingModule():
         else:
             key_string = "R"
         direct_input.PressKey(key_string)
-        time.sleep(sleep_time)
+        self.sleep()
         direct_input.ReleaseKey(key_string)
+        self.sleep()
 
 class State(Enum):
     CAST = 0
