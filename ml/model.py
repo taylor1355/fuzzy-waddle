@@ -23,7 +23,7 @@ class Model:
         img_height, img_width = downscaled.shape[:2]
         box_height, box_width = self.small_box_size[:2]
 
-        overlap = 0.2
+        overlap = 0.1
         horizontal_windows = self.get_windows(box_width, img_width, overlap)
         vertical_windows = self.get_windows(box_height, img_height, overlap)
         predictions = {}
@@ -31,7 +31,7 @@ class Model:
             for j in range(len(horizontal_windows)):
                 x, y = int(horizontal_windows[j]), int(vertical_windows[i])
                 region = downscaled[y : y + box_height, x : x + box_width]
-                prediction = self.estimator.predict(region.reshape(1,-1))[0]
+                prediction = int(self.estimator.predict(region.reshape(1,-1))[0])
                 if prediction != self.negative_class:
                     if prediction not in predictions:
                         predictions[prediction] = []
@@ -43,7 +43,7 @@ class Model:
                 best_class = pred_class
 
         if best_class is None:
-            return None, None
+            return self.negative_class, None
         else:
             return best_class, np.mean(predictions[best_class], axis=0).astype(int)
 

@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import cv2 as cv
 
-from sklearn.discriminant_analysis import LinearDiscriminantAnalysis, QuadraticDiscriminantAnalysis
+from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
 from sklearn.ensemble import AdaBoostClassifier, RandomForestClassifier
 from sklearn.neural_network import MLPClassifier
 from sklearn.tree import DecisionTreeClassifier
@@ -93,11 +93,6 @@ def main():
     c_param = Parameter("C Value", "C", [1e-2, 1e-1, 1e0, 1e1, 1e2], log_scale=True)
     linear_svm_algo = Algorithm("Linear Support Vector Machine", [c_param], svm.SVC(kernel="linear"))
     analyze_algorithm(linear_svm_algo, curr_results_dir, train_X, train_y, X, y)
-    print()
-
-    # Quadratic Discriminant Analysis
-    qda_algo = Algorithm("Quadratic Discriminant Analysis", [], QuadraticDiscriminantAnalysis())
-    analyze_algorithm(qda_algo, curr_results_dir, train_X, train_y, X, y)
     print()
 
     # Linear Discriminant Analysis
