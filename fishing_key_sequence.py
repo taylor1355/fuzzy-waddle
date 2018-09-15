@@ -139,7 +139,7 @@ class KeySequenceDetector():
         hasCharacters = True
         for pos in range(8):
             img = self.getCharImage(pos)
-            key = self.keys_model.predict(img)
+            key, position = self.keys_model.predict(img)
             if key < 0:
                 return keySequence
             else:
