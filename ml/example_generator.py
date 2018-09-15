@@ -31,7 +31,7 @@ def generate_positive_examples(files, screenshot_dir, num_examples, row, col, wi
         img = cv.imread(file)
 
         for i in range(num_samples):
-            radius = 0.125
+            radius = 0.1
             shifted_row = row + int(radius * random.random() * height) * random.choice([-1, 1])
             shifted_col = col + int(radius * random.random() * width) * random.choice([-1, 1])
             write_example(img, destination_dir, shifted_row, shifted_col, width, height)

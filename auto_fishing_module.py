@@ -14,12 +14,8 @@ from fishing_key_sequence import KeySequenceDetector
 sys.path.append("ml")
 from ml.model import Model
 
-start_target_x = 575
-start_target_y = 256
-catch_target_x = 575
-catch_target_y = 240
 do_actions = True
-show_image = False
+show_image = True
 output_chars = False
 
 class AutoFishingModule():
@@ -29,68 +25,74 @@ class AutoFishingModule():
         self.castLineAction = Action(0, self.castLine)
 
         self.last_frame = None
-        self.state = State.CAST
+        self.state = State.WAIT_SPACEBAR
 
         self.keySequenceDetector = KeySequenceDetector()
-
         self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
+
+        self.cast_reel_threshold = 217
         self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
+        start_x, start_y = 575, 200
+        box_width, box_height = self.spacebar_width, int(1.5 * self.spacebar_height)
+        self.spacebar_search_box = (start_x, start_x + box_width, start_y, start_y + box_height)
 
     def getActions(self, frame):
         self.last_frame = frame
         frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
-        cast_spacebar_region = self.region_of_interest(start_target_x, start_target_y, self.spacebar_width, self.spacebar_height)
-        reel_spacebar_region = self.region_of_interest(catch_target_x, catch_target_y, self.spacebar_width, self.spacebar_height)
 
         spacebar_prediction = self.predict_spacebar()
         spacebar_detected = spacebar_prediction is not None
+        cast = spacebar_detected and spacebar_prediction[1] > self.cast_reel_threshold
+
+        if spacebar_detected:
+            print("detected at {}".format(spacebar_prediction))
 
         actions = []
+        if self.state == State.WAIT_SPACEBAR:
+            if cast:
+                self.state = State.CAST
+            elif spacebar_detected:
+                self.state = State.REEL
         if self.state == State.CAST:
             actions = [self.castLineAction]
             self.state = self.state.next()
         elif self.state == State.WAIT_AFTER_CAST:
             if not spacebar_detected:
                 self.state = self.state.next()
-        elif self.state == State.WAIT_REEL:
-            if spacebar_detected:
-                self.state = self.state.next()
         elif self.state == State.REEL:
             actions = [self.reelInFishAction]
             self.state = self.state.next()
-        elif self.state == State.WAIT_KEYS or self.state == State.KEYS:
-            self.state = self.state.next()
-        elif self.state == State.WAIT_CAST:
-            if spacebar_detected:
-                self.state = self.state.next()
 
         if show_image:
             img = np.array(frame)
 
             font = cv.FONT_HERSHEY_SIMPLEX
-            if (spacebar_detected):
-                cv.putText(img, "Space Bar Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
+            if spacebar_detected:
                 cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + self.spacebar_width, spacebar_prediction[1] + self.spacebar_height), (0, 0, 255), 2)
+                if cast:
+                    text = "Cast Space Bar Detected"
+                else:
+                    text = "Reel Space Bar Detected"
+                cv.putText(img, text, (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
             else:
                 cv.putText(img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
 
-            cv.rectangle(img, (start_target_x, 200), (start_target_x + self.spacebar_width, 320), (255,0,0), 1)
+            min_x, max_x, min_y, max_y = self.spacebar_search_box
+            cv.rectangle(img, (min_x, min_y), (max_x, max_y), (255,0,0), 1)
             cv.imshow("output", img)
-            cv.waitKey(0)
+            cv.waitKey(1)
 
         if not do_actions:
             return []
         return actions
 
     def predict_spacebar(self):
-        search_region = self.region_of_interest(start_target_x, 200, self.spacebar_width, 120)
+        min_x, max_x, min_y, max_y = self.spacebar_search_box
+        search_region = self.last_frame[min_y : max_y, min_x : max_x]
         class_detected, prediction = self.spacebar_model.predict(search_region)
         if class_detected == 1:
-            return prediction + np.array([start_target_x, 200])
+            return prediction + np.array([min_x, min_y])
         return None
-
-    def region_of_interest(self, min_x, min_y, width, height):
-        return self.last_frame[min_y : min_y+height, min_x : min_x+width]
 
     def reelInFish(self):
         direct_input.PressKey("SPACE")
@@ -137,16 +139,16 @@ class AutoFishingModule():
         self.sleep()
 
 class State(Enum):
-    CAST = 0
-    WAIT_AFTER_CAST = 1
-    WAIT_REEL = 2
+    WAIT_SPACEBAR = 0
+    CAST = 1
+    WAIT_AFTER_CAST = 2
     REEL = 3
-    WAIT_KEYS = 4
-    KEYS = 5
-    WAIT_CAST = 6
 
     def next(self):
-        next_state = State((self.value + 1) % len(State))
+        if self == State.WAIT_AFTER_CAST:
+            next_state = State.WAIT_SPACEBAR
+        else:
+            next_state = State((self.value + 1) % len(State))
         print("Exited State: {}".format(self))
         print("Entered State: {}".format(next_state))
         return next_state

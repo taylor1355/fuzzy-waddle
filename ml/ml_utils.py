@@ -9,6 +9,7 @@ def load_settings(task_dir):
     settings["box_width"] = int(settings["box_width"])
     settings["box_height"] = int(settings["box_height"])
     settings["downscale"] = float(settings["downscale"])
+    settings["negative_class"] = int(settings["negative_class"])
     return settings
 
 def load_data(task_dir, test_fraction, flatten=True):
