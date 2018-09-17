@@ -18,6 +18,7 @@ inventory_y = 60
 inventory_width = 800
 inventory_height = 470
 zero_spot_open = False
+def_image = 'green_beer.jpg'
 #do_actions = False
 #show_image = True
 #output_chars = False
@@ -41,31 +42,29 @@ class BeerFeederModule():
         #implementation of actions needs to be added debugging is here now
         if self.state == State.BASE:
             if (zero_spot_open):
-                feedBeerToWorkers()
+                feedBeerToWorkersAction()
                 self.state = self.state.next()
                 self.state = self.state.next()
             else:
-                openInventory()
+                openInventoryAction()
                 self.state = self.state.next()
 #//////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 #edit what image we use
         if self.state == State.INVENTORY:
-            search_image('green_beer.jpg')
+            invenAction()
             self.state = self.state.next()
         if self.state == State.FEEDING:
-            search_image('recover.jpg')
-            search_image('confirm.jpg')
-            search_image('repeat.jpg')
+            feedAction()
             self.state = self.state.next()
         if self.state == State.WAIT:
-            time.sleep(600)
+            sleepAction()
             self.state = self.state.next()
 
 
 #////////////////////////////////////////////////////////////////////////////////////////
 #add in am image display
 
-    def search_image(image_name):
+    def search_image(self,image_name):
         template = cv.imread("ref_images\\" + image_name,0)
         res = cv.matchTemplate(inventory,template,cv.TM_CCOEFF)
         min_val, max_val, min_loc, max_loc = cv.minMaxLoc(res)
@@ -74,18 +73,34 @@ class BeerFeederModule():
     def region(self, x, y, width, height):
         return self.last_frame[y : y+height, x : x+width]
 
-    def feedBeerToWorkers(self):
+    def feedBeerToWorkersAction(self):
         direct_input.PressKey("0")
         print("opening workers")
         direct_input.ReleaseKey("0")
         time.sleep(1)
-    def moveMouse(self,x,y):
-        #move to restart all button(mouse movement)
-    def openIventory(self):
+
+    def invenAction(self)
+        search_image(def_image)
+
+    def feedAction(self):
+        search_image('recover.jpg')
+        search_image('confirm.jpg')
+        search_image('repeat.jpg')
+
+    def sleepAction(self):
+        time.sleep(600)
+
+    def openIventoryAction(self):
         direct_input.PressKey("I")
         print("opening inventory")
         direct_input.ReleaseKey("I")
         time.sleep(1)
+
+#test whether this is in frame or not
+    def moveMouse(self,x,y):
+        pyautogui.click(x,y)
+
+
 
 class State(Enum):
     BASE = 0
