@@ -79,7 +79,7 @@ def main():
 
     # Random Forest
     num_estimators_param = Parameter("Number of Estimators", "n_estimators", range(1, 121, 10))
-    max_depth = Parameter("Max Tree Depth", "max_depth", range(1, 6))
+    max_depth = Parameter("Max Tree Depth", "max_depth", range(1, 7))
     rf_algo = Algorithm("Random Forest", [num_estimators_param, max_depth], RandomForestClassifier())
     analyze_algorithm(rf_algo, curr_results_dir, train_X, train_y, X, y)
     print()
@@ -101,8 +101,8 @@ def main():
     print()
 
     # Neural Network
-    hidden_layer_param = Parameter("Number of Hidden Layers", "hidden_layer_sizes", vary_num_hidden_layers(40, 6), range(1, 7))
-    alpha_param = Parameter("Regularization Strength (alpha)", "alpha", [1e-2, 1e-3, 1e-4, 1e-5, 1e-6], log_scale=True)
+    hidden_layer_param = Parameter("Number of Hidden Layers", "hidden_layer_sizes", vary_num_hidden_layers(30, 5), range(1, 6))
+    alpha_param = Parameter("Regularization Strength (alpha)", "alpha", [1e0, 1e-2, 1e-4, 1e-6, 1e-8], log_scale=True)
     nn_algo = Algorithm("Neural Network", [hidden_layer_param, alpha_param], MLPClassifier(max_iter=5000))
     analyze_algorithm(nn_algo, curr_results_dir, train_X, train_y, X, y)
     print()
