@@ -47,6 +47,20 @@ class Model:
         else:
             return best_class, np.mean(predictions[best_class], axis=0).astype(int)
 
+    def predict_prob(self, img):
+        if img.shape[0] != self.box_size[0] or img.shape[1] != self.box_size[1]:
+            print("Invalid image size for prediction")
+            return None
+
+        downscaled = ml_utils.downscale(img, self.scale_factor)
+        img_height, img_width = downscaled.shape[:2]
+        box_height, box_width = self.small_box_size[:2]
+
+        probabilities = self.estimator.predict_proba(downscaled.reshape(1,-1))[0]
+        best_class_index = int(np.argmax(probabilities))
+        best_class_label = int(self.estimator.classes_[best_class_index])
+        return best_class_label, probabilities[best_class_index]
+
     def get_windows(self, window_length, img_length, overlap):
         offset = overlap * window_length
         num_windows = int((img_length - window_length) / offset)
