@@ -90,13 +90,20 @@ class KeySequenceDetector():
             normalized_norm = KeyDetectorDiff.normalize(comb_norm)
             normalized_inv = KeyDetectorDiff.normalize(comb_inv)
             normalized_diff = KeyDetectorDiff.normalize(comb_frame)
+
+            sorteda = np.copy(normalized_diff)
+            sorteda = np.argsort(sorteda)
+            print(sorteda)
+            amnt = 10
+
             perc = 0.7
             for i in range(normalized_norm.shape[0]):
                 for j in range(normalized_norm.shape[1]):
                     norm_out[i, j] = (norm_out[i, j] * (1 - perc)) + (normalized_norm[i, j] * perc)
                     inv_out[i, j] = (inv_out[i, j] * (1 - perc)) + (normalized_inv[i, j] * perc)
                     diff_out[i, j] = (diff_out[i, j] * (1 - perc)) + (normalized_diff[i, j] * perc)
-
+            for i in range( len(sorteda) - amnt, len(sorteda) ):
+                diff_out[sorteda[i]] = [0, 0, 255]
             if True:
                 for i in range(h):
                     for j in range(w):
@@ -139,11 +146,11 @@ class KeySequenceDetector():
         hasCharacters = True
         for pos in range(8):
             img = self.getCharImage(pos)
-            key, position = self.keys_model.predict(img)
-            if key < 0:
+            key = self.keys_model.predict(img)
+            if key[0] < 0:
                 return keySequence
             else:
-                keySequence.append(key)
+                keySequence.append(key[0])
         return keySequence
 
 
