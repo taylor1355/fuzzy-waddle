@@ -3,6 +3,8 @@ import pyautogui
 import cv2 as cv
 import numpy as np
 
+sys.path.append("ml")
+from ml.model import Model
 
 target_x = 574
 target_y = 240
@@ -259,6 +261,80 @@ class Runs():
             for j in range(frame.shape[1]):
                 out[i*scale:(i+1)*scale, j*scale:(j+1)*scale] = frame[i, j]
         return out
+
+    def run9():
+        mask_path = "ref_images/combined_key_color.tiff"
+        window_path = "screenshots/keys_img001.jpg"
+        mask = cv.imread(mask_path, 1)
+        frame = cv.imread(window_path, 1)
+        color_frame = cv.imread(window_path)
+
+        key_detector = KeyDetectorDiffColor(mask, 0)
+        key_detector.processFrame(frame)
+
+        di = 35
+        comb_frame = KeyDetectorDiffColor.normalize(key_detector.getDifferenceImage())
+        max, max_y, max_x = KeyDetectorDiff.getMaxAndPos(comb_frame)
+
+        thresh = 127
+        thresh_mask = comb_frame[:, :] > thresh
+        thresh_img = np.zeros((comb_frame.shape[0], comb_frame.shape[1]), np.uint8)
+        thresh_img[thresh_mask] = 255
+
+        keys_model = Model.load("ml/keys/keys_model.pkl")
+        h, w = key_detector.h, key_detector.w
+        for i in range(30):
+            for j in range(30):
+                if (thresh_img[i, j] > thresh):
+                    base_context = np.zeros((h, w, 3), np.uint8)
+                    base_context[:, :] = color_frame[key_detector.y+i:key_detector.y+h+i, key_detector.x+j:key_detector.x+w+j]
+                    print(keys_model.predict_prob(base_context))
+                    cv.imshow("frame", base_context)
+                    cv.waitKey()
+
+        cv.imshow("comb_frame", comb_frame)
+        cv.imshow("thresh_img", thresh_img)
+
+        # avg_color = np.zeros((100, 100, 3), np.uint8)
+        # avg_color[:, :] = key_detector.normal_avg_image[max_y, max_x]
+        # cv.imshow("avg", avg_color)
+        #
+        # norm_dev = KeyDetectorDiffColor.normalize(key_detector.normal_dev_image)
+        # inv_dev = KeyDetectorDiffColor.normalize(key_detector.inverse_dev_image)
+        # cv.imshow("norm mask", Runs.scale_gray(norm_dev, 10))
+        # cv.imshow("inv mask", Runs.scale_gray(inv_dev, 10))
+        # cv.imshow("diff mask", Runs.scale_gray(KeyDetectorDiffColor.normalize(comb_frame), 10))
+        #
+        # h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
+        # base_context = np.zeros((h, w, 3), np.uint8)
+        # base_context[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
+        # norm_context = np.copy(base_context)
+        # inv_context = np.copy(base_context)
+        # diff_context = np.copy(base_context)
+        # cv.rectangle(base_context, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
+        # base_context[max_y, max_x] = [0, 0, 255]
+        #
+        # perc = 0.7
+        # for i in range(norm_dev.shape[0]):
+        #     for j in range(norm_dev.shape[1]):
+        #         norm_context[i, j] = (norm_context[i, j] * (1 - perc)) + (norm_dev[i, j] * perc)
+        #         inv_context[i, j] = (inv_context[i, j] * (1 - perc)) + (inv_dev[i, j] * perc)
+        # cv.imshow("norm context", Runs.scale(norm_context, 10))
+        # cv.imshow("inv context", Runs.scale(inv_context, 10))
+        # cv.imshow("base context", Runs.scale(base_context, 10))
+        # color_avgs = key_detector.normal_avg_image
+        # color_avgs[max_y, max_x] = [0, 0, 255]
+        # cv.imshow("color avgs", Runs.scale(color_avgs, 10))
+        #
+        # mask_red = mask[:, :, 2] > pixel_thresh
+        # h, w = mask.shape[0], mask.shape[1]
+        # for i in range(h):
+        #     for j in range(w):
+        #         if mask_red[i, j] > 0:
+        #             color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x] = [255, 0, 0]
+        # cv.imshow("frame", color_frame)
+        cv.waitKey(0)
+        cv.destroyAllWindows()
 
     def run8():
         mask_path = "ref_images/combined_key_color.tiff"
@@ -1019,4 +1095,4 @@ class Runs():
 
 
 if __name__ == "__main__":
-    Runs.run8()
+    Runs.run9()
