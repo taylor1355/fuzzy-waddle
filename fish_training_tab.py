@@ -1,4 +1,4 @@
-import os, sys, time, uuid
+import os, sys, time, uuid, random
 import pyautogui
 import cv2 as cv
 import numpy as np
@@ -7,8 +7,7 @@ from game_window import GameWindow
 import direct_input
 import input
 import utils
-from static_image_loader import KeyDetectorDiff
-from stream_test_tab import CharacterDetectionThread
+from fishing_key_sequence import KeySequenceDetector
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -31,9 +30,8 @@ class FishTab(QWidget):
     def _stop_worker_button_handler(self):
         self.thread.terminate()
 
-
 start_target_x = 574
-start_target_y = 222
+start_target_y = 225
 catch_target_x = 574
 catch_target_y = 205
 target_thresh = 5
@@ -43,10 +41,7 @@ output_chars = True
 class StreamThread(QThread):
     def __init__(self):
         super(StreamThread, self).__init__()
-        self.charDetectThread = CharacterDetectionThread()
-        self.charDetectThread.show_image = False
-        self.charDetectThread.show_border = True
-        self.charDetectThread.show_overlay = False
+        self.keySequenceDetector = KeySequenceDetector()
 
     def __del__(self):
         self.wait()
@@ -61,6 +56,7 @@ class StreamThread(QThread):
         result = cv.matchTemplate(self.comp_img, stream_gray, method)
         mn, _, mnLoc, _ = cv.minMaxLoc(result)
         MPx, MPy = mnLoc
+        print("x: " + str(MPx) + ", y: " + str(MPy))
 
         status = 0
 
@@ -85,13 +81,35 @@ class StreamThread(QThread):
             direct_input.PressKey("SPACE")
             print("playing game")
             direct_input.ReleaseKey("SPACE")
-            time.sleep(3)
-            if output_chars:
-                self.charDetectThread.terminate()
-                self.charDetectThread.start()
-            time.sleep(6)
+            time.sleep(2.5)
+            self.keySequenceDetector.processFrames(2, 2)
+            keySequence = self.keySequenceDetector.getKeySequence()
+            print("keys: " + str(keySequence))
+            for key in keySequence:
+                self.tapKey(key)
+            time.sleep(4)
+            self.tapKey(4)
 
+    def sleep(self):
+        sleep_time = 0.02 + np.clip(random.gauss(0.03, 0.01), 0, 0.06)
+        time.sleep(sleep_time)
 
+    def tapKey(self, key):
+        key_string = ""
+        if key == 0:
+            key_string = "W"
+        elif key == 1:
+            key_string = "A"
+        elif key == 2:
+            key_string = "S"
+        elif key == 3:
+            key_string = "D"
+        else:
+            key_string = "R"
+        direct_input.PressKey(key_string)
+        self.sleep()
+        direct_input.ReleaseKey(key_string)
+        self.sleep()
 
     def run(self):
         self.window = GameWindow("BLACK DESERT")
@@ -108,8 +126,8 @@ class StreamThread(QThread):
 
             if (actions):
                 if (state == 1):
-                    # space bar
                     self.actions(1)
+                    # break
                 elif (state == 2):
                     self.actions(2)
 
@@ -137,6 +155,6 @@ class StreamThread(QThread):
                 cv.destroyAllWindows()
 
             print("sleeping...")
-            time.sleep(1)
+            time.sleep(2)
 
         print("leaving")

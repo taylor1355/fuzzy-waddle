@@ -9,11 +9,15 @@ def load_settings(task_dir):
     settings["box_width"] = int(settings["box_width"])
     settings["box_height"] = int(settings["box_height"])
     settings["downscale"] = float(settings["downscale"])
+    settings["negative_class"] = int(settings["negative_class"])
+    settings["classes"] = load_csv_dict(os.path.join(task_dir, "class_info.csv"))
+    settings["classes"] = {class_name: int(class_label) for class_name, class_label in settings["classes"].items()}
     return settings
 
 def load_data(task_dir, test_fraction, flatten=True):
-    downscale_factor = load_settings(task_dir)["downscale"]
-    classes = load_csv_dict(os.path.join(task_dir, "class_info.csv"))
+    settings = load_settings(task_dir)
+    downscale_factor = settings["downscale"]
+    classes = settings["classes"]
 
     data = []
     for class_name in classes:
