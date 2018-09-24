@@ -20,6 +20,7 @@ class KeySequenceDetector():
         self.show_image = False
         self.show_border = False
         self.show_overlay = False
+        self.save_full_image = False
 
         self.start_x, self.start_y, self.w, self.h = 0, 0, 0, 0
 
@@ -57,6 +58,11 @@ class KeySequenceDetector():
         self.last_frame = color_frame
 
         if output:
+            if self.save_full_image:
+                f not os.path.exists(output_folder):
+                    os.makedirs(output_folder)
+                file_name = str(uuid.uuid4()) + ".jpg"
+                cv.imwrite(os.path.join(output_folder, file_name), color_frame)
             di = KeyDetectorDiff.di
             max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
             mask_red = mask[:, :, 2] > pixel_thresh

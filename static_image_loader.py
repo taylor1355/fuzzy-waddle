@@ -186,59 +186,79 @@ class Runs():
 
     def run7():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img001.jpg"
+        window_path = "screenshots/keys_img002.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 0)
         color_frame = cv.imread(window_path)
 
-        key_detector = KeyDetectorDiff(mask, 0)
-        key_detector.processFrame(frame)
+        key_detectors = []
+        for pos in range(2):
+            key_detectors.append(KeyDetectorDiff(mask, pos))
+            key_detectors[pos].processFrame(frame)
 
-        # cv.imshow("n", KeyDetector2.normalize(key_detector.normal_dev_image))
-        # cv.imshow("i", KeyDetector2.normalize(key_detector.inverse_dev_image))
+        img1 = KeyDetectorDiff.normalize(key_detectors[0].normal_dev_image)
+        img2 = KeyDetectorDiff.normalize(key_detectors[0].inverse_dev_image)
+        img3 = KeyDetectorDiff.normalize(key_detectors[0].getDifferenceImage())
 
-        # img1 = KeyDetector2.normalize(key_detector.normal_dev_image)
-        # img2 = KeyDetector2.normalize(key_detector.inverse_dev_image)
-        # img3 = KeyDetector2.normalize(key_detector.getDifferenceImage())
-        #
-        # color_frame1 = cv.imread(window_path)
-        # color_frame2 = cv.imread(window_path)
-        # color_frame3 = cv.imread(window_path)
-        #
-        # for i in range(img1.shape[0]):
-        #     for j in range(img1.shape[1]):
-        #         v = img1[i, j] / 2
-        #         color_frame1[key_detector.y + i, key_detector.x + j] = (color_frame1[key_detector.y + i, key_detector.x + j] / 2) + [v, v, v]
-        #         v = img2[i, j] / 2
-        #         color_frame2[key_detector.y + i, key_detector.x + j] = (color_frame2[key_detector.y + i, key_detector.x + j] / 2) + [v, v, v]
-        #         v = img3[i, j] / 2
-        #         color_frame3[key_detector.y + i, key_detector.x + j] = (color_frame3[key_detector.y + i, key_detector.x + j] / 2) + [v, v, v]
-        # cv.imshow("normal", color_frame1)
-        # cv.imshow("inverse", color_frame2)
-        # cv.imshow("difference", color_frame3)
+        cv.imshow("n", img1)
+        cv.imshow("i", img2)
+        cv.imshow("d", img3)
+
+        color_frame1 = np.zeros((key_detectors[0].h + key_detectors[0].dy, key_detectors[0].w + key_detectors[0].dx, 3), np.uint8)
+        color_frame2 = np.zeros((key_detectors[0].h + key_detectors[0].dy, key_detectors[0].w + key_detectors[0].dx, 3), np.uint8)
+        color_frame3 = np.zeros((key_detectors[0].h + key_detectors[0].dy, key_detectors[0].w + key_detectors[0].dx, 3), np.uint8)
+
+        color_frame1[:, :] = color_frame[key_detectors[0].y:key_detectors[0].y+key_detectors[0].h+key_detectors[0].dy, key_detectors[0].x:key_detectors[0].x+key_detectors[0].w+key_detectors[0].dx]
+        color_frame2[:, :] = color_frame[key_detectors[0].y:key_detectors[0].y+key_detectors[0].h+key_detectors[0].dy, key_detectors[0].x:key_detectors[0].x+key_detectors[0].w+key_detectors[0].dx]
+        color_frame3[:, :] = color_frame[key_detectors[0].y:key_detectors[0].y+key_detectors[0].h+key_detectors[0].dy, key_detectors[0].x:key_detectors[0].x+key_detectors[0].w+key_detectors[0].dx]
+
+        mask_amnt = 0.7
+        img_amnt = 1 - mask_amnt
+        for i in range(img1.shape[0]):
+            for j in range(img1.shape[1]):
+                v = img1[i, j] * mask_amnt
+                color_frame1[i, j] = (color_frame[key_detectors[0].y + i, key_detectors[0].x + j] * img_amnt) + [v, v, v]
+                v = img2[i, j] * mask_amnt
+                color_frame2[i, j] = (color_frame[key_detectors[0].y + i, key_detectors[0].x + j] * img_amnt) + [v, v, v]
+                v = img3[i, j] * mask_amnt
+                color_frame3[i, j] = (color_frame[key_detectors[0].y + i, key_detectors[0].x + j] * img_amnt) + [v, v, v]
+        cv.imshow("normal", color_frame1)
+        cv.imshow("inverse", color_frame2)
+        cv.imshow("difference", color_frame3)
 
         di = 35
-        comb_frame = key_detector.getDifferenceImage()
+        comb_frame = np.zeros((KeyDetectorDiff.dy, KeyDetectorDiff.dx), np.int16)
+        for key_detector in key_detectors:
+            comb_frame += key_detector.getDifferenceImage()
         max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
 
+        # masks_folder = "ref_images/"
+        # masks = [cv.imread(masks_folder + "w_key_color.tiff", 1), cv.imread(masks_folder + "a_key_color.tiff", 1), cv.imread(masks_folder + "s_key_color.tiff", 1), cv.imread(masks_folder + "d_key_color.tiff", 1)]
 
-        masks_folder = "ref_images/"
-        masks = [cv.imread(masks_folder + "w_key_color.tiff", 1), cv.imread(masks_folder + "a_key_color.tiff", 1), cv.imread(masks_folder + "s_key_color.tiff", 1), cv.imread(masks_folder + "d_key_color.tiff", 1)]
+        # key_mappers = []
+        # for i in range(7):
+        #     key_mappers.append(KeyMapper(masks, max_x, max_y, i))
+        #     key_mappers[i].processFrame(frame)
+        # print(key_mappers[0].getKey())
 
-        key_mappers = []
-        for i in range(7):
-            key_mappers.append(KeyMapper(masks, max_x, max_y, i))
-            key_mappers[i].processFrame(frame)
-        print(key_mappers[0].getKey())
+        normal_pixels = np.zeros((mask.shape[0], mask.shape[1], 3), np.uint8)
+        inverse_pixels = np.zeros((mask.shape[0], mask.shape[1], 3), np.uint8)
 
         mask_red = mask[:, :, 2] > pixel_thresh
+        mask_green = mask[:, :, 1] > pixel_thresh
         h, w = mask.shape[0], mask.shape[1]
         for c in range(8):
             for i in range(h):
                 for j in range(w):
                     if mask_red[i, j] > 0:
-                        color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x + (c+1)*di] = [255, 0, 0]
+                        if c == 0:
+                            normal_pixels[i, j] = color_frame[key_detectors[0].y + i + max_y, key_detectors[0].x + j + max_x]
+                        color_frame[key_detectors[0].y + i + max_y, key_detectors[0].x + j + max_x + c*di] = [255, 0, 0]
+                    elif mask_green[i, j] > 0 and c == 0:
+                        inverse_pixels[i, j] = color_frame[key_detectors[0].y + i + max_y, key_detectors[0].x + j + max_x]
             # cv.rectangle(color_frame, (key_detector.x, key_detector.y), (key_detector.x + w + key_detector.dx, key_detector.y + h + key_detector.dy), (255, 0, 0), 2)
+        cv.imshow("np", normal_pixels)
+        cv.imshow("ip", inverse_pixels)
         cv.imshow("frame", color_frame)
         cv.waitKey(0)
         cv.destroyAllWindows()
@@ -706,13 +726,14 @@ class Runs():
 
     def image_combiner():
         output_folder = "ref_images"
-        output_name = "combined_key_color.tiff"
+        output_name = "combined_key_color2.tiff"
         key_output_names = ["w_key_color.tiff", "a_key_color.tiff", "s_key_color.tiff", "d_key_color.tiff"]
         input_folder = "ref_images/keys_orig/"
         imgs = [cv.imread(input_folder + "w_key_centered.jpg", 1), cv.imread(input_folder + "a_key_centered.jpg", 1), cv.imread(input_folder + "s_key_centered.jpg", 1), cv.imread(input_folder + "d_key_centered.jpg", 1)]
 
         thresh = 120
         added_border = 2
+        amnt_to_mask = 2
         w, h = imgs[0].shape[1], imgs[0].shape[0]
 
         # generate normal mask
@@ -736,7 +757,7 @@ class Runs():
             for j in range(w):
                 v = out_img[i, j, 2]
                 if v > 25:
-                    if v < 75:
+                    if v < 125:
                         out_img[i, j, 2] = 0
                     else:
                         out_img[i, j, 2] = 255
@@ -791,13 +812,13 @@ class Runs():
         if not os.path.exists(output_folder):
             os.makedirs(output_folder)
         cv.imwrite(output_folder + "/" + output_name, out_img_cropped)
-        for k in range(4):
-            cv.imwrite(output_folder + "/" + key_output_names[k], imgs_cropped[k])
+        # for k in range(4):
+        #     cv.imwrite(output_folder + "/" + key_output_names[k], imgs_cropped[k])
 
         # show if wanted
         show_source = False
         show_mask = True
-        show_keys = True
+        show_keys = False
         if show_source:
             c = 1
             for img in imgs:
