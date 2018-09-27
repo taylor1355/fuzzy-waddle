@@ -26,7 +26,7 @@ class KeySequenceDetector():
 
         self.start_x, self.start_y, self.w, self.h = 0, 0, 0, 0
 
-        self.keys_model = Model.load("ml/keys/keys_model.pkl")
+        self.keys_model = Model.load("ml/keys_2/keys_model.pkl")
 
     def processFrames(self, pos=1, read_time=1):
         window = GameWindow("BLACK DESERT")
@@ -97,10 +97,11 @@ class KeySequenceDetector():
             normalized_inv = KeyDetectorDiff.normalize(comb_inv)
             normalized_diff = KeyDetectorDiff.normalize(comb_frame)
 
-            sorteda = np.copy(normalized_diff)
-            sorteda = np.argsort(sorteda)
+
+            flattened = np.copy(normalized_diff).flatten()
+            sorteda = np.argsort(flattened)
             print(sorteda)
-            amnt = 10
+            amnt = 20
 
             perc = 0.7
             for i in range(normalized_norm.shape[0]):
@@ -109,7 +110,8 @@ class KeySequenceDetector():
                     inv_out[i, j] = (inv_out[i, j] * (1 - perc)) + (normalized_inv[i, j] * perc)
                     diff_out[i, j] = (diff_out[i, j] * (1 - perc)) + (normalized_diff[i, j] * perc)
             for i in range( len(sorteda) - amnt, len(sorteda) ):
-                diff_out[sorteda[i]] = [0, 0, 255]
+                a = sorteda[i]
+                diff_out[int(a/30), int(a)%30] = [0, 0, 255]
             if True:
                 for i in range(h):
                     for j in range(w):
@@ -124,6 +126,7 @@ class KeySequenceDetector():
             cv.imwrite(os.path.join(output_last_folder, "norm.tiff"), norm_out)
             cv.imwrite(os.path.join(output_last_folder, "inv.tiff"), inv_out)
             cv.imwrite(os.path.join(output_last_folder, "diff.tiff"), diff_out)
+            cv.imwrite(os.path.join(output_last_folder, "frame.jpg"), color_frame)
 
         if self.show_image:
             di = KeyDetectorDiff.di

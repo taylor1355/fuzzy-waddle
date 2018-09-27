@@ -31,9 +31,9 @@ class FishTab(QWidget):
         self.thread.terminate()
 
 start_target_x = 574
-start_target_y = 225
+start_target_y = 260
 catch_target_x = 574
-catch_target_y = 205
+catch_target_y = 240
 target_thresh = 5
 actions = True
 output_chars = True
