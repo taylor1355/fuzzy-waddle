@@ -103,10 +103,10 @@ class KeyDetectorDiff():
                 self.normal_avg_image[i, j] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]) / 255)
         for i in range(0, self.dy):
             for j in range(0, self.dx):
-                self.normal_dev_image[i, j] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]-self.normal_avg_image[i, j]) / 255)
+                self.normal_dev_image[i, j] = int(np.sum(abs(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]-self.normal_avg_image[i, j])) / 255)
         for i in range(self.dx):
             for j in range(self.dy):
-                self.inverse_dev_image[i, j] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.inverse_kernel[:, :]-self.normal_avg_image[i, j]) / 255)
+                self.inverse_dev_image[i, j] = int(np.sum(abs(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.inverse_kernel[:, :]-self.normal_avg_image[i, j])) / 255)
         self.cntr += 1
 
     def getDifferenceImage(self):
@@ -266,20 +266,22 @@ class Runs():
         mask_path = "ref_images/combined_key_color.tiff"
         window_path = "screenshots/keys_img002.jpg"
         mask = cv.imread(mask_path, 1)
-        frame = cv.imread(window_path, 1)
+        frame = cv.imread(window_path, 0)
         color_frame = cv.imread(window_path)
 
-        key_detector = KeyDetectorDiffColor(mask, 0)
+        key_detector = KeyDetectorDiff(mask, 0)
         key_detector.processFrame(frame)
 
         di = 35
         comb_frame = KeyDetectorDiffColor.normalize(key_detector.getDifferenceImage())
         max, max_y, max_x = KeyDetectorDiff.getMaxAndPos(comb_frame)
 
-        thresh = 127
-        thresh_mask = comb_frame[:, :] > thresh
-        thresh_img = np.zeros((comb_frame.shape[0], comb_frame.shape[1]), np.uint8)
-        thresh_img[thresh_mask] = 255
+        thresh = 200
+        thresh_mask = comb_frame[:, :] < thresh
+        thresh_img = np.copy(comb_frame)
+        thresh_img[thresh_mask] = 0
+
+        weighted_img = np.copy(thresh_img)
 
         keys_model = Model.load("ml/keys/keys_model.pkl")
         h, w = key_detector.h, key_detector.w
@@ -290,19 +292,24 @@ class Runs():
                     base_context = np.zeros((h, w, 3), np.uint8)
                     base_context[:, :] = color_frame[key_detector.y+i:key_detector.y+h+i, key_detector.x+j:key_detector.x+w+j]
                     v = keys_model.predict_prob(base_context)
-                    print(v)
                     if (v[0] == 0):
                         output[i, j] = [0, 0, v[1] * 255]
+                        weighted_img[i, j] = weighted_img[i, j] * v[1]
+                        print(v)
                     elif (v[0] == -1):
-                        output[i, j] = [0, 0, 0] #[v[1] * 255, 0, 0]
+                        output[i, j] = [v[1] * 255, 0, 0] # output[i, j] = [0, 0, 0]
+                        weighted_img[i, j] = 0
                     else:
                         output[i, j] = [0, v[1] * 255, 0]
+                        weighted_img[i, j] = weighted_img[i, j] * v[1]
+                        print(v)
                     # cv.imshow("frame", base_context)
                     # cv.waitKey()
 
-        cv.imshow("out", output)
-        cv.imshow("comb_frame", comb_frame)
-        cv.imshow("thresh_img", thresh_img)
+        cv.imshow("out", Runs.scale(output, 8))
+        cv.imshow("comb_frame", Runs.scale_gray(comb_frame, 8))
+        cv.imshow("thresh_img", Runs.scale_gray(thresh_img, 8))
+        cv.imshow("weighted_img", Runs.scale_gray(weighted_img, 8))
 
         # avg_color = np.zeros((100, 100, 3), np.uint8)
         # avg_color[:, :] = key_detector.normal_avg_image[max_y, max_x]
@@ -347,7 +354,7 @@ class Runs():
 
     def run8():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img002.jpg"
+        window_path = "screenshots/keys_img001.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 1)
         color_frame = cv.imread(window_path)
@@ -402,7 +409,7 @@ class Runs():
 
     def run7():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img002.jpg"
+        window_path = "screenshots/keys_img001.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 0)
         color_frame = cv.imread(window_path)
@@ -416,9 +423,9 @@ class Runs():
         img2 = KeyDetectorDiff.normalize(key_detectors[0].inverse_dev_image)
         img3 = KeyDetectorDiff.normalize(key_detectors[0].getDifferenceImage())
 
-        cv.imshow("n", img1)
-        cv.imshow("i", img2)
-        cv.imshow("d", img3)
+        cv.imshow("n", Runs.scale_gray(img1, 10))
+        cv.imshow("i", Runs.scale_gray(img2, 10))
+        cv.imshow("d", Runs.scale_gray(img3, 10))
 
         color_frame1 = np.zeros((key_detectors[0].h + key_detectors[0].dy, key_detectors[0].w + key_detectors[0].dx, 3), np.uint8)
         color_frame2 = np.zeros((key_detectors[0].h + key_detectors[0].dy, key_detectors[0].w + key_detectors[0].dx, 3), np.uint8)
@@ -438,9 +445,9 @@ class Runs():
                 color_frame2[i, j] = (color_frame[key_detectors[0].y + i, key_detectors[0].x + j] * img_amnt) + [v, v, v]
                 v = img3[i, j] * mask_amnt
                 color_frame3[i, j] = (color_frame[key_detectors[0].y + i, key_detectors[0].x + j] * img_amnt) + [v, v, v]
-        cv.imshow("normal", color_frame1)
-        cv.imshow("inverse", color_frame2)
-        cv.imshow("difference", color_frame3)
+        cv.imshow("normal", Runs.scale(color_frame1, 10))
+        cv.imshow("inverse", Runs.scale(color_frame2, 10))
+        cv.imshow("difference", Runs.scale(color_frame3, 10))
 
         di = 35
         comb_frame = np.zeros((KeyDetectorDiff.dy, KeyDetectorDiff.dx), np.int16)
