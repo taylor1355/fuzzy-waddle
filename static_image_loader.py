@@ -264,7 +264,7 @@ class Runs():
 
     def run9():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img001.jpg"
+        window_path = "screenshots/keys_img002.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 1)
         color_frame = cv.imread(window_path)
@@ -283,15 +283,24 @@ class Runs():
 
         keys_model = Model.load("ml/keys/keys_model.pkl")
         h, w = key_detector.h, key_detector.w
+        output = np.zeros((30, 30, 3), np.uint8)
         for i in range(30):
             for j in range(30):
                 if (thresh_img[i, j] > thresh):
                     base_context = np.zeros((h, w, 3), np.uint8)
                     base_context[:, :] = color_frame[key_detector.y+i:key_detector.y+h+i, key_detector.x+j:key_detector.x+w+j]
-                    print(keys_model.predict_prob(base_context))
-                    cv.imshow("frame", base_context)
-                    cv.waitKey()
+                    v = keys_model.predict_prob(base_context)
+                    print(v)
+                    if (v[0] == 0):
+                        output[i, j] = [0, 0, v[1] * 255]
+                    elif (v[0] == -1):
+                        output[i, j] = [0, 0, 0] #[v[1] * 255, 0, 0]
+                    else:
+                        output[i, j] = [0, v[1] * 255, 0]
+                    # cv.imshow("frame", base_context)
+                    # cv.waitKey()
 
+        cv.imshow("out", output)
         cv.imshow("comb_frame", comb_frame)
         cv.imshow("thresh_img", thresh_img)
 
