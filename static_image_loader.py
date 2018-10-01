@@ -264,7 +264,7 @@ class Runs():
 
     def run9():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img002.jpg"
+        window_path = "screenshots/failure001.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 0)
         color_frame = cv.imread(window_path)
@@ -282,6 +282,12 @@ class Runs():
         thresh_img[thresh_mask] = 0
 
         weighted_img = np.copy(thresh_img)
+
+        h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
+        base_context2 = np.zeros((h, w, 3), np.uint8)
+        base_context2[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
+        cv.rectangle(base_context2, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
+        base_context2[max_y, max_x] = [0, 0, 255]
 
         keys_model = Model.load("ml/keys/keys_model.pkl")
         h, w = key_detector.h, key_detector.w
@@ -310,6 +316,7 @@ class Runs():
         cv.imshow("comb_frame", Runs.scale_gray(comb_frame, 8))
         cv.imshow("thresh_img", Runs.scale_gray(thresh_img, 8))
         cv.imshow("weighted_img", Runs.scale_gray(weighted_img, 8))
+        cv.imshow("base_context", Runs.scale(base_context2, 8))
 
         # avg_color = np.zeros((100, 100, 3), np.uint8)
         # avg_color[:, :] = key_detector.normal_avg_image[max_y, max_x]
@@ -354,7 +361,7 @@ class Runs():
 
     def run8():
         mask_path = "ref_images/combined_key_color.tiff"
-        window_path = "screenshots/keys_img001.jpg"
+        window_path = "screenshots/keys_img004.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 1)
         color_frame = cv.imread(window_path)
