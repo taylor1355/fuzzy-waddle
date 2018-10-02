@@ -11,7 +11,7 @@ from ml.model import Model
 pixel_thresh = 140
 output = True
 output_amnt = 8
-output_folder = "ml/keys_2/data/"
+output_folder = "ml/keys_2/screenshots/"
 output_border = True
 output_overlay = False
 output_pixel_border = 5
@@ -26,7 +26,7 @@ class KeySequenceDetector():
 
         self.start_x, self.start_y, self.w, self.h = 0, 0, 0, 0
 
-        self.keys_model = Model.load("ml/keys_2/keys_model.pkl")
+        self.keys_model = Model.load("ml/keys/keys_model.pkl")
 
     def processFrames(self, pos=1, read_time=1):
         window = GameWindow("BLACK DESERT")
@@ -65,7 +65,7 @@ class KeySequenceDetector():
 
         if output:
             if self.save_full_image:
-                f not os.path.exists(output_folder):
+                if not os.path.exists(output_folder):
                     os.makedirs(output_folder)
                 file_name = str(uuid.uuid4()) + ".jpg"
                 cv.imwrite(os.path.join(output_folder, file_name), color_frame)
@@ -100,8 +100,8 @@ class KeySequenceDetector():
 
             flattened = np.copy(normalized_diff).flatten()
             sorteda = np.argsort(flattened)
-            print(sorteda)
-            amnt = 20
+            # print(sorteda)
+            amnt = 1
 
             perc = 0.7
             for i in range(normalized_norm.shape[0]):
@@ -153,7 +153,7 @@ class KeySequenceDetector():
     def getKeySequence(self):
         keySequence = []
         hasCharacters = True
-        for pos in range(8):
+        for pos in range(10):
             img = self.getCharImage(pos)
             key = self.keys_model.predict(img)
             if key[0] < 0:

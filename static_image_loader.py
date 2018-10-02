@@ -242,6 +242,82 @@ class KeyDetectorDiffColor():
                     max_y, max_x = i, j
         return max, max_x, max_y
 
+class KeyDetectorDiffElim():
+    x, y, dx, dy, di = 463, 380, 30, 30, 35
+    amnt = 1
+    thresh = 150
+
+    def __init__(self, mask, pos):
+        self.mask = mask
+        self.x += pos * self.di
+        self.w, self.h = self.mask.shape[1], self.mask.shape[0]
+        self.cntr = 0
+
+        self.normal_kernel = np.zeros((self.h, self.w), np.uint8)
+        self.mask_red = mask[:, :, 2] > pixel_thresh
+        self.normal_kernel[self.mask_red] = self.amnt
+
+        self.inverse_kernel = np.zeros((self.h, self.w), np.uint8)
+        self.mask_green = mask[:, :, 1] > pixel_thresh
+        self.inverse_kernel[self.mask_green] = self.amnt
+
+        self.normal_avg_image = np.zeros((self.dx, self.dy), np.uint8)
+        self.normal_dev_image = np.zeros((self.dx, self.dy), np.int16)
+        self.inverse_dev_image = np.zeros((self.dy, self.dx), np.int16)
+
+        self.keys_model = Model.load("ml/keys/keys_model.pkl")
+
+    def processFrame(self, frame):
+        for i in range(0, self.dy):
+            for j in range(0, self.dx):
+                self.normal_avg_image[i, j] = int(np.sum(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]) / 255)
+        for i in range(0, self.dy):
+            for j in range(0, self.dx):
+                self.normal_dev_image[i, j] = int(np.sum(abs(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.normal_kernel[:, :]-self.normal_avg_image[i, j])) / 255)
+        for i in range(self.dx):
+            for j in range(self.dy):
+                self.inverse_dev_image[i, j] = int(np.sum(abs(frame[self.y+i:self.y+i+self.h, self.x+j:self.x+j+self.w]*self.inverse_kernel[:, :]-self.normal_avg_image[i, j])) / 255)
+        self.cntr += 1
+
+    def getDifferenceImage(self, frame):
+        if self.cntr > 0:
+            difference_image = np.zeros((self.dy, self.dx), np.int16)
+            for i in range(self.dy):
+                for j in range(self.dx):
+                    difference_image[i, j] = int(self.inverse_dev_image[i, j]) - int(self.normal_dev_image[i, j]) + (127 * self.cntr)
+
+            norm_image = KeyDetectorDiffElim.normalize(difference_image)
+            thresh_mask = norm_image[:, :] < self.thresh
+            norm_image[thresh_mask] = 0
+            for i in range(30):
+                for j in range(30):
+                    if (norm_image[i, j] > self.thresh):
+                        base_context = np.zeros((self.h, self.w, 3), np.uint8)
+                        base_context[:, :] = frame[self.y+i:self.y+self.h+i, self.x+j:self.x+self.w+j]
+                        v = self.keys_model.predict_prob(base_context)
+                        if (v[0] == 0):
+                            norm_image[i, j] = norm_image[i, j] * v[1]
+                        else:
+                            norm_image[i, j] = 0
+            return norm_image
+
+    def normalize(frame):
+        normalized_frame = np.zeros((frame.shape[0], frame.shape[1]), np.uint8)
+        min, max = np.min(frame), np.max(frame)
+        div = (max - min) / 255
+        normalized_frame[:, :] = (frame[:, :] - min) / div
+        return normalized_frame
+
+    def getMaxAndPos(frame):
+        max, max_x, max_y = 0, 0, 0
+        for i in range(frame.shape[0]):
+            for j in range(frame.shape[1]):
+                if frame[i, j] > max:
+                    max = frame[i, j]
+                    max_y, max_x = i, j
+        return max, max_x, max_y
+
+
 
 
 class Runs():
@@ -261,6 +337,31 @@ class Runs():
             for j in range(frame.shape[1]):
                 out[i*scale:(i+1)*scale, j*scale:(j+1)*scale] = frame[i, j]
         return out
+
+    def run10():
+        mask_path = "ref_images/combined_key_color.tiff"
+        window_path = "screenshots/failure002.jpg"
+        mask = cv.imread(mask_path, 1)
+        frame = cv.imread(window_path, 0)
+        color_frame = cv.imread(window_path)
+
+        key_detector = KeyDetectorDiffElim(mask, 0)
+        key_detector.processFrame(frame)
+
+        comb_frame = KeyDetectorDiffElim.normalize(key_detector.getDifferenceImage(color_frame))
+        max, max_x, max_y = KeyDetectorDiffElim.getMaxAndPos(comb_frame)
+
+        h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
+        base_context = np.zeros((h, w, 3), np.uint8)
+        base_context[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
+        cv.rectangle(base_context, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
+        base_context[max_y, max_x] = [0, 0, 255]
+        cv.imshow("base_context", Runs.scale(base_context, 8))
+        cv.imshow("comb_frame", Runs.scale_gray(comb_frame, 8))
+
+        cv.waitKey(0)
+        cv.destroyAllWindows()
+
 
     def run9():
         directory = "screenshots/failures/"
@@ -1115,4 +1216,4 @@ class Runs():
 
 
 if __name__ == "__main__":
-    Runs.run9()
+    Runs.run10()
