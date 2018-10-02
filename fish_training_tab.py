@@ -31,12 +31,13 @@ class FishTab(QWidget):
         self.thread.terminate()
 
 start_target_x = 574
-start_target_y = 260
+start_target_y = 256
 catch_target_x = 574
-catch_target_y = 240
+catch_target_y = 236
 target_thresh = 5
 actions = True
 output_chars = True
+output_folder = "screenshots/failures/"
 
 class StreamThread(QThread):
     def __init__(self):
@@ -85,13 +86,20 @@ class StreamThread(QThread):
             self.keySequenceDetector.processFrames(2, 2)
             keySequence = self.keySequenceDetector.getKeySequence()
             print("keys: " + str(keySequence))
+            if (len(keySequence) == 0):
+                print("writing frame to file as failure")
+                self.stream_img = self.window.grab_frame()
+                if not os.path.exists(output_folder):
+                    os.makedirs(output_folder)
+                file_name = str(uuid.uuid4()) + ".jpg"
+                cv.imwrite(os.path.join(output_folder, file_name), self.stream_img)
             for key in keySequence:
                 self.tapKey(key)
             time.sleep(4)
             self.tapKey(4)
 
     def sleep(self):
-        sleep_time = 0.02 + np.clip(random.gauss(0.03, 0.01), 0, 0.06)
+        sleep_time = 0.02 + np.clip(random.gauss(0.04, 0.01), 0, 0.08)
         time.sleep(sleep_time)
 
     def tapKey(self, key):
