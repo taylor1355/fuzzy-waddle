@@ -364,97 +364,104 @@ class Runs():
 
 
     def run9():
-        directory = "screenshots/failures/"
-        for filename in os.listdir(directory):
-            mask_path = "ref_images/combined_key_color.tiff"
-            window_path = "screenshots/failures/failure001.jpg"
-            window_path = directory + filename
-            mask = cv.imread(mask_path, 1)
-            frame = cv.imread(window_path, 0)
-            color_frame = cv.imread(window_path)
+        while (1):
+            directory = "screenshots/failures/"
+            for filename in os.listdir(directory):
+                mask_path = "ref_images/combined_key_color.tiff"
+                window_path = "screenshots/failures/failure001.jpg"
+                window_path = directory + filename
+                mask = cv.imread(mask_path, 1)
+                frame = cv.imread(window_path, 0)
+                color_frame = cv.imread(window_path)
 
-            key_detector = KeyDetectorDiff(mask, 0)
-            new_key_detector = KeyDetectorDiffElim(mask, 0)
-            key_detector.processFrame(frame)
+                key_detector = KeyDetectorDiff(mask, 0)
+                key_detector.processFrame(frame)
 
-            di = 35
-            comb_frame = KeyDetectorDiffColor.normalize(key_detector.getDifferenceImage())
-            max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
+                comb_frame = KeyDetectorDiff.normalize(key_detector.getDifferenceImage())
 
-            thresh = 200
-            thresh_mask = comb_frame[:, :] < thresh
-            thresh_img = np.copy(comb_frame)
-            thresh_img[thresh_mask] = 0
+                thresh = 200
+                thresh_mask = comb_frame[:, :] < thresh
+                thresh_img = np.copy(comb_frame)
+                thresh_img[thresh_mask] = 0
 
-            weighted_img = np.copy(thresh_img)
+                weighted_img = np.copy(thresh_img)
 
-            h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
-            base_context2 = np.zeros((h, w, 3), np.uint8)
-            base_context2[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
-            cv.rectangle(base_context2, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
-            base_context2[max_y, max_x] = [0, 0, 255]
+                h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
+                base_context2 = np.zeros((h, w, 3), np.uint8)
+                base_context2[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
+                cv.rectangle(base_context2, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
 
-            keys_model = Model.load("ml/keys/keys_model.pkl")
-            h, w = key_detector.h, key_detector.w
-            output = np.zeros((30, 30, 3), np.uint8)
-            for i in range(30):
-                for j in range(30):
-                    if (thresh_img[i, j] > thresh):
-                        base_context = np.zeros((h, w, 3), np.uint8)
-                        base_context[:, :] = color_frame[key_detector.y+i:key_detector.y+h+i, key_detector.x+j:key_detector.x+w+j]
-                        v = keys_model.predict_prob(base_context)
-                        if (v[0] != -1):
-                            output[i, j] = [0, 0, v[1] * 255]
-                            weighted_img[i, j] = weighted_img[i, j] * v[1]
-                        else:
-                            output[i, j] = [v[1] * 255, 0, 0] # output[i, j] = [0, 0, 0]
-                            weighted_img[i, j] = 0
+                keys_model = Model.load("ml/keys/keys_model.pkl")
+                h, w = key_detector.h, key_detector.w
+                output = np.zeros((30, 30, 3), np.uint8)
+                for i in range(30):
+                    for j in range(30):
+                        if (thresh_img[i, j] > thresh):
+                            base_context = np.zeros((h, w, 3), np.uint8)
+                            base_context[:, :] = color_frame[key_detector.y+i:key_detector.y+h+i, key_detector.x+j:key_detector.x+w+j]
+                            v = keys_model.predict_prob(base_context)
+                            if (v[0] != -1):
+                                output[i, j] = [0, 0, v[1] * 255]
+                                weighted_img[i, j] = weighted_img[i, j] * v[1]
+                            else:
+                                output[i, j] = [v[1] * 255, 0, 0] # output[i, j] = [0, 0, 0]
+                                weighted_img[i, j] = 0
 
-            cv.imshow("out", Runs.scale(output, 8))
-            cv.imshow("comb_frame", Runs.scale_gray(comb_frame, 8))
-            cv.imshow("thresh_img", Runs.scale_gray(thresh_img, 8))
-            cv.imshow("weighted_img", Runs.scale_gray(weighted_img, 8))
-            cv.imshow("base_context", Runs.scale(base_context2, 8))
 
-            # avg_color = np.zeros((100, 100, 3), np.uint8)
-            # avg_color[:, :] = key_detector.normal_avg_image[max_y, max_x]
-            # cv.imshow("avg", avg_color)
-            #
-            norm_dev = KeyDetectorDiffColor.normalize(key_detector.normal_dev_image)
-            inv_dev = KeyDetectorDiffColor.normalize(key_detector.inverse_dev_image)
-            cv.imshow("norm mask", Runs.scale_gray(norm_dev, 8))
-            cv.imshow("inv mask", Runs.scale_gray(inv_dev, 8))
-            # cv.imshow("diff mask", Runs.scale_gray(KeyDetectorDiffColor.normalize(comb_frame), 4))
-            #
-            # h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
-            # base_context = np.zeros((h, w, 3), np.uint8)
-            # base_context[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
-            # norm_context = np.copy(base_context)
-            # inv_context = np.copy(base_context)
-            # diff_context = np.copy(base_context)
-            # cv.rectangle(base_context, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
-            # base_context[max_y, max_x] = [0, 0, 255]
-            #
-            # perc = 0.7
-            # for i in range(norm_dev.shape[0]):
-            #     for j in range(norm_dev.shape[1]):
-            #         norm_context[i, j] = (norm_context[i, j] * (1 - perc)) + (norm_dev[i, j] * perc)
-            #         inv_context[i, j] = (inv_context[i, j] * (1 - perc)) + (inv_dev[i, j] * perc)
-            # cv.imshow("norm context", Runs.scale(norm_context, 10))
-            # cv.imshow("inv context", Runs.scale(inv_context, 10))
-            # cv.imshow("base context", Runs.scale(base_context, 10))
-            # color_avgs = key_detector.normal_avg_image
-            # color_avgs[max_y, max_x] = [0, 0, 255]
-            # cv.imshow("color avgs", Runs.scale(color_avgs, 10))
-            #
-            # mask_red = mask[:, :, 2] > pixel_thresh
-            # h, w = mask.shape[0], mask.shape[1]
-            # for i in range(h):
-            #     for j in range(w):
-            #         if mask_red[i, j] > 0:
-            #             color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x] = [255, 0, 0]
-            # cv.imshow("frame", color_frame)
-            cv.waitKey(0)
+                max, max_x, max_y = 0, 0, 0
+                for i in range(30):
+                    for j in range(30):
+                        if (weighted_img[i, j] > max):
+                            max = weighted_img[i, j]
+                            max_x = j
+                            max_y = i
+                base_context2[max_y, max_x] = [0, 0, 255]
+
+                cv.imshow("out", Runs.scale(output, 8))
+                cv.imshow("comb_frame", Runs.scale_gray(comb_frame, 8))
+                cv.imshow("thresh_img", Runs.scale_gray(thresh_img, 8))
+                cv.imshow("weighted_img", Runs.scale_gray(weighted_img, 8))
+                cv.imshow("base_context", Runs.scale(base_context2, 8))
+
+                # avg_color = np.zeros((100, 100, 3), np.uint8)
+                # avg_color[:, :] = key_detector.normal_avg_image[max_y, max_x]
+                # cv.imshow("avg", avg_color)
+                #
+                norm_dev = KeyDetectorDiffColor.normalize(key_detector.normal_dev_image)
+                inv_dev = KeyDetectorDiffColor.normalize(key_detector.inverse_dev_image)
+                cv.imshow("norm mask", Runs.scale_gray(norm_dev, 8))
+                cv.imshow("inv mask", Runs.scale_gray(inv_dev, 8))
+                # cv.imshow("diff mask", Runs.scale_gray(KeyDetectorDiffColor.normalize(comb_frame), 4))
+                #
+                # h, w = key_detector.h + key_detector.dy, key_detector.w + key_detector.dx
+                # base_context = np.zeros((h, w, 3), np.uint8)
+                # base_context[:, :] = color_frame[key_detector.y:key_detector.y+h, key_detector.x:key_detector.x+w]
+                # norm_context = np.copy(base_context)
+                # inv_context = np.copy(base_context)
+                # diff_context = np.copy(base_context)
+                # cv.rectangle(base_context, (0, 0), (key_detector.dx, key_detector.dy), (255, 0, 0), 1)
+                # base_context[max_y, max_x] = [0, 0, 255]
+                #
+                # perc = 0.7
+                # for i in range(norm_dev.shape[0]):
+                #     for j in range(norm_dev.shape[1]):
+                #         norm_context[i, j] = (norm_context[i, j] * (1 - perc)) + (norm_dev[i, j] * perc)
+                #         inv_context[i, j] = (inv_context[i, j] * (1 - perc)) + (inv_dev[i, j] * perc)
+                # cv.imshow("norm context", Runs.scale(norm_context, 10))
+                # cv.imshow("inv context", Runs.scale(inv_context, 10))
+                # cv.imshow("base context", Runs.scale(base_context, 10))
+                # color_avgs = key_detector.normal_avg_image
+                # color_avgs[max_y, max_x] = [0, 0, 255]
+                # cv.imshow("color avgs", Runs.scale(color_avgs, 10))
+                #
+                # mask_red = mask[:, :, 2] > pixel_thresh
+                # h, w = mask.shape[0], mask.shape[1]
+                # for i in range(h):
+                #     for j in range(w):
+                #         if mask_red[i, j] > 0:
+                #             color_frame[key_detector.y + i + max_y, key_detector.x + j + max_x] = [255, 0, 0]
+                # cv.imshow("frame", color_frame)
+                cv.waitKey(0)
         cv.destroyAllWindows()
 
     def run8():
@@ -1216,4 +1223,4 @@ class Runs():
 
 
 if __name__ == "__main__":
-    Runs.run10()
+    Runs.run9()
