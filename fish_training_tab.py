@@ -29,17 +29,19 @@ class FishTab(QWidget):
 
     def _stop_worker_button_handler(self):
         self.thread.terminate()
+        print("terminated...")
 
 start_target_x = 574
-start_target_y = 256
-catch_target_x = 574
-catch_target_y = 236
+start_target_y = 263
+catch_target_x = start_target_x
+catch_target_y = start_target_y - 20
 target_thresh = 5
 actions = True
 output_chars = True
 output_folder = "screenshots/failures/"
 
 class StreamThread(QThread):
+    reel_state = 2
     def __init__(self):
         super(StreamThread, self).__init__()
         self.keySequenceDetector = KeySequenceDetector()
@@ -62,7 +64,11 @@ class StreamThread(QThread):
         status = 0
 
         if (MPx > start_target_x - target_thresh and MPx < start_target_x + target_thresh and MPy > start_target_y - target_thresh and MPy < start_target_y + target_thresh):
-            return 1
+            if (self.reel_state == 2):
+                self.reel_state = 1
+            else:
+                self.reel_state = 2
+            return self.reel_state
         elif (MPx > catch_target_x - target_thresh and MPx < catch_target_x + target_thresh and MPy > catch_target_y - target_thresh and MPy < catch_target_y + target_thresh):
             return 2
         else:
@@ -74,6 +80,8 @@ class StreamThread(QThread):
             print("casting line")
             direct_input.ReleaseKey("SPACE")
             time.sleep(5)
+            print("moving camera")
+            pyautogui.move(random.gauss(0, 600), random.gauss(0, 40), duration=random.gauss(2, .1))
         elif (action == 2):
             direct_input.PressKey("SPACE")
             print("reeling in")
@@ -86,13 +94,13 @@ class StreamThread(QThread):
             self.keySequenceDetector.processFrames(2, 2)
             keySequence = self.keySequenceDetector.getKeySequence()
             print("keys: " + str(keySequence))
-            if (len(keySequence) == 0):
-                print("writing frame to file as failure")
-                self.stream_img = self.window.grab_frame()
-                if not os.path.exists(output_folder):
-                    os.makedirs(output_folder)
-                file_name = str(uuid.uuid4()) + ".jpg"
-                cv.imwrite(os.path.join(output_folder, file_name), self.stream_img)
+            # if (len(keySequence) == 0):
+            #     print("writing frame to file as failure")
+            #     self.stream_img = self.window.grab_frame()
+            #     if not os.path.exists(output_folder):
+            #         os.makedirs(output_folder)
+            #     file_name = str(uuid.uuid4()) + ".jpg"
+            #     cv.imwrite(os.path.join(output_folder, file_name), self.stream_img)
             for key in keySequence:
                 self.tapKey(key)
             time.sleep(4)
