@@ -13,10 +13,11 @@ base = '../../../ref_images/'
 key_colors = [cv.imread(base+'w_key_color.tiff', 1), cv.imread(base+'a_key_color.tiff', 1), cv.imread(base+'s_key_color.tiff', 1), cv.imread(base+'d_key_color.tiff', 1)]
 h, w, _ = key_colors[0].shape
 
-folders = os.listdir('.')
-for folder in folders:
-	if not os.path.isdir(folder):
-		folders.remove(folder)
+folders = []
+folders_raw = os.listdir('.')
+for folder in folders_raw:
+	if os.path.isdir(folder):
+		folders.append(folder)
 
 class image_show:
 	folder_index = 0
@@ -82,6 +83,13 @@ def move_offset(x, y):
 	image_show.has_saved = False
 	image_show.reload()
 
+def inc_key_index():
+	if image_show.key_index < len(image_show.key_seq):
+		image_show.key_index += 1
+		image_show.reload()
+	else:
+		print('index out of range')
+
 def edit_key(key):
 	if key == -1:
 		if image_show.key_index == len(image_show.key_seq) - 1:
@@ -95,6 +103,7 @@ def edit_key(key):
 		else:
 			image_show.key_seq[image_show.key_index] = key
 		image_show.has_saved = False
+		inc_key_index()
 	image_show.reload()
 
 image_show.reset()
@@ -129,7 +138,7 @@ while 1:
 		elif (key == 9): # Tab key
 			image_show.save()
 			image_show.reload()
-		elif (key == 112): # p key
+		elif (key == 116): # t key
 			image_show.reset()
 			image_show.reload()
 		else:
@@ -155,16 +164,12 @@ while 1:
 			else:
 				print('index out of range')
 		elif (key == 99): # c key
-			if image_show.key_index < len(image_show.key_seq):
-				image_show.key_index += 1
-				image_show.reload()
-			else:
-				print('index out of range')
+			inc_key_index()
 		elif (key == 9): # Tab key
 			image_show.save()
 			image_show.edit_key = False
 			image_show.reload()
-		elif (key == 112): # p key
+		elif (key == 116): # t key
 			image_show.reset()
 			image_show.reload()
 		elif (key == 27): # ESC key

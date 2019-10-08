@@ -128,6 +128,7 @@ class StreamThread(QThread):
         self.sleep()
 
     def run(self):
+        self.reel_state = 2
         self.window = GameWindow("BLACK DESERT")
         self.window.move_to_foreground()
 
