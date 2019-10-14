@@ -1,11 +1,11 @@
 import sys, time
 
-import utils
-from numpad import Numpad
-
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
+
+from utils.ui_generator import *
+from utils.numpad import Numpad
 
 class EnergyTab(QWidget):
     def __init__(self):
@@ -13,10 +13,10 @@ class EnergyTab(QWidget):
 
         self.startTime = time.time()
 
-        self.timeLabel = utils.createLabel("3:00", self, 0, 0)
-        self.startTimerButton = utils.createButton("Start", self, 1, 0)
+        self.timeLabel = createLabel("3:00", self, 0, 0)
+        self.startTimerButton = createButton("Start", self, 1, 0)
         self.startTimerButton.released.connect(self._start_timer)
-        self.resetTimerButton = utils.createButton("Reset", self, 2, 0)
+        self.resetTimerButton = createButton("Reset", self, 2, 0)
         self.resetTimerButton.released.connect(self._reset_time)
 
         self.soundItem1 = SoundItem(self, 2)
@@ -57,12 +57,12 @@ class EnergyTab(QWidget):
 
 class SoundItem():
     def __init__(self, parent, y):
-        self.soundCheckBox = utils.createCheckBox("Enabled", parent, 0, y)
+        self.soundCheckBox = createCheckBox("Enabled", parent, 0, y)
         self.soundCheckBox.stateChanged.connect(self._sound_checkbox_changed)
         self.isSoundEnabled = False
-        self.soundLabel = utils.createLabel("0:00", parent, 1, y)
+        self.soundLabel = createLabel("0:00", parent, 1, y)
         self.timeToSound = 0
-        self.editTimeButton = utils.createButton("Edit Time", parent, 2, y)
+        self.editTimeButton = createButton("Edit Time", parent, 2, y)
         self.editTimeButton.released.connect(self._edit_time_button_handler)
         self.numpad = Numpad(1)
         # self.connect(self.numpad, SIGNAL("send_int(int)"), self._receive_numpad_int)

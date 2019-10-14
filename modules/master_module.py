@@ -3,23 +3,14 @@ import pyautogui
 import cv2 as cv
 import numpy as np
 
-# import utils
-# import direct_input
-# import input
-
-from actions import Action
-from game_window import GameWindow
-
-# from home_module import HomeModule
-# from energy_module import EnergyModule
-# from stream_test_module import StreamModule
-from auto_fishing_module import AutoFishingModule
+from utils.game_window import GameWindow
+from modules.auto_fishing_module import AutoFishingModule
 
 from PySide2.QtCore import QThread
 
-class MainController(QThread):
+class MasterModule(QThread):
     def __init__(self):
-        super(MainController, self).__init__()
+        super(MasterModule, self).__init__()
         self.isActive = False
         self.autoFishingModule = AutoFishingModule()
         self.modules = [self.autoFishingModule]

@@ -1,11 +1,12 @@
-from game_window import GameWindow
-import direct_input
 import numpy as np
 import cv2 as cv
 import pyautogui
 import time
 import ctypes
 import sys
+
+from utils.game_window import GameWindow
+import utils.direct_input
 
 def is_admin():
     try: return ctypes.windll.shell32.IsUserAnAdmin()

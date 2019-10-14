@@ -4,41 +4,41 @@ import cv2 as cv
 import numpy as np
 import random
 
-from game_window import GameWindow
-import direct_input
-import input
-import utils
-from static_image_loader import KeyDetectorDiff
-from fishing_key_sequence import KeySequenceDetector
-from game_window import GameWindow
-
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 
+from utils.game_window import GameWindow
+import utils.direct_input
+import utils.input
+from utils.ui_generator import *
+from testing.static_image_loader import KeyDetectorDiff
+from utils.fishing_key_sequence import KeySequenceDetector
+from utils.game_window import GameWindow
+
 class StreamTab(QWidget):
     def __init__(self):
         super(StreamTab, self).__init__()
-        openStreamButton = utils.createButton("Open Stream", self, 0, 0)
+        openStreamButton = createButton("Open Stream", self, 0, 0)
         openStreamButton.released.connect(self._open_stream_button_handler)
-        closeStreamButton = utils.createButton("Close Stream", self, 0, 1)
+        closeStreamButton = createButton("Close Stream", self, 0, 1)
         closeStreamButton.released.connect(self._close_stream_button_handler)
 
-        startWorkerButton = utils.createButton("Start Worker", self, 0, 2)
+        startWorkerButton = createButton("Start Worker", self, 0, 2)
         startWorkerButton.released.connect(self._start_worker_button_handler)
-        stopWorkerButton = utils.createButton("Stop Worker", self, 0, 3)
+        stopWorkerButton = createButton("Stop Worker", self, 0, 3)
         stopWorkerButton.released.connect(self._stop_worker_button_handler)
 
-        takeScreenshotButton = utils.createButton("Take Screenshot", self, 0, 5)
+        takeScreenshotButton = createButton("Take Screenshot", self, 0, 5)
         takeScreenshotButton.released.connect(self._take_screenshot_button_handler)
 
-        charDetectionButton = utils.createButton("Detect Char", self, 2, 0)
+        charDetectionButton = createButton("Detect Char", self, 2, 0)
         charDetectionButton.released.connect(self._char_detection_button_handler)
-        showImageCheckBox = utils.createCheckBox("Show Image", self, 2, 1)
+        showImageCheckBox = createCheckBox("Show Image", self, 2, 1)
         showImageCheckBox.stateChanged.connect(self._show_image_check_box_handler)
-        showBorderCheckBox = utils.createCheckBox("Show Border", self, 2, 2)
+        showBorderCheckBox = createCheckBox("Show Border", self, 2, 2)
         showBorderCheckBox.stateChanged.connect(self._show_border_check_box_handler)
-        showOverlayCheckBox = utils.createCheckBox("Show Overlay", self, 2, 3)
+        showOverlayCheckBox = createCheckBox("Show Overlay", self, 2, 3)
         showOverlayCheckBox.stateChanged.connect(self._show_overlay_check_box_handler)
 
 
@@ -48,7 +48,7 @@ class StreamTab(QWidget):
         self.screeshotThread = ScreenshotThread()
         self.charDetectionThread = CharacterDetectionThread()
 
-        self.workerLabel = utils.createLabel("Worker is Sleeping", self, 0, 4)
+        self.workerLabel = createLabel("Worker is Sleeping", self, 0, 4)
         self.connect(self.thread, SIGNAL("send_back_qstring(QString)"), self._get_qstring)
 
     def _get_qstring(self, text):

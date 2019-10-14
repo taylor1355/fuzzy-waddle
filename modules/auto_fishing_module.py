@@ -5,14 +5,12 @@ import cv2 as cv
 import numpy as np
 import random
 
-from actions import Action
-import direct_input
-import input
+# import direct_input
+# import input
 
-from fishing_key_sequence import KeySequenceDetector
-
-sys.path.append("ml")
+from utils.fishing_key_sequence import KeySequenceDetector
 from ml.model import Model
+from actions import Action
 
 do_actions = True
 show_image = True
@@ -20,7 +18,7 @@ output_chars = False
 
 class AutoFishingModule():
     def __init__(self):
-        self.isEnabled = True
+        self.isEnabled = False
         self.reelInFishAction = Action(0, self.reelInFish)
         self.castLineAction = Action(0, self.castLine)
 

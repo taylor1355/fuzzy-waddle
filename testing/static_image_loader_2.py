@@ -3,7 +3,7 @@ import pyautogui
 import cv2 as cv
 import numpy as np
 
-sys.path.append("ml")
+sys.path.append('ml')
 from ml.model import Model
 
 target_x = 574
@@ -88,7 +88,7 @@ class KeyDetectorMLScraper():
 
 class Runs:
     def run1():
-        mask_path = "ref_images/combined_key_color.tiff"
+        mask_path = "resources/combined_key_color.tiff"
         mask = cv.imread(mask_path, 1)
         window_path = "screenshots/keys_img001.jpg"
         frame = cv.imread(window_path, 1)

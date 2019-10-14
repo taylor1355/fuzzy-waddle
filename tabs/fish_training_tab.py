@@ -3,22 +3,22 @@ import pyautogui
 import cv2 as cv
 import numpy as np
 
-from game_window import GameWindow
-import direct_input
-import input
-import utils
-from fishing_key_sequence import KeySequenceDetector
-
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
 from PySide2.QtCore import *
 
+from utils.game_window import GameWindow
+import utils.direct_input
+import utils.input
+from utils.ui_generator import *
+from utils.fishing_key_sequence import KeySequenceDetector
+
 class FishTab(QWidget):
     def __init__(self):
         super(FishTab, self).__init__()
-        startWorkerButton = utils.createButton("Start Worker", self, 0, 0)
+        startWorkerButton = createButton("Start Worker", self, 0, 0)
         startWorkerButton.released.connect(self._start_worker_button_handler)
-        stopWorkerButton = utils.createButton("Stop Worker", self, 0, 1)
+        stopWorkerButton = createButton("Stop Worker", self, 0, 1)
         stopWorkerButton.released.connect(self._stop_worker_button_handler)
 
         self.thread = StreamThread()
@@ -39,12 +39,16 @@ target_thresh = 5
 actions = True
 output_chars = True
 output_folder = "screenshots/failures/"
+output_spaces = True
+spaces_folder_cast = "ml/keys_loc/space_cast"
+spaces_folder_reel = "ml/keys_loc/space_reel"
 
 class StreamThread(QThread):
     reel_state = 2
     def __init__(self):
         super(StreamThread, self).__init__()
         self.keySequenceDetector = KeySequenceDetector()
+        self.keySequenceDetector.output = True
 
     def __del__(self):
         self.wait()
@@ -66,8 +70,14 @@ class StreamThread(QThread):
         if (MPx > start_target_x - target_thresh and MPx < start_target_x + target_thresh and MPy > start_target_y - target_thresh and MPy < start_target_y + target_thresh):
             if (self.reel_state == 2):
                 self.reel_state = 1
+                spaces_folder = spaces_folder_cast
             else:
                 self.reel_state = 2
+                spaces_folder = spaces_folder_reel
+            if output_spaces:
+                if not os.path.exists(spaces_folder):
+                    os.makedirs(spaces_folder)
+                cv.imwrite(os.path.join(spaces_folder, str(uuid.uuid4()) + '.jpg'), self.stream_img)
             return self.reel_state
         elif (MPx > catch_target_x - target_thresh and MPx < catch_target_x + target_thresh and MPy > catch_target_y - target_thresh and MPy < catch_target_y + target_thresh):
             return 2

@@ -105,6 +105,8 @@ venv.bak/
 
 # Images
 /screenshots/
+/ml/keys_2/
+/ml/keys_loc/
 
 # Machine Learning Output
 results/

@@ -1,6 +1,6 @@
 import sys
 
-import utils
+from utils.ui_generator import *
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -20,7 +20,7 @@ class Numpad(QWidget):
         #     text = "0"
         # else:
         text = "0:00"
-        self.outputLabel = utils.createLabel(text, self, 0, 0)
+        self.outputLabel = createLabel(text, self, 0, 0)
         x, y, w, h = gap_width, gap_height, item_width * 4 + gap_width * 3, item_height
         self.outputLabel.setGeometry(x, y, w, h)
         for x in range(3):
@@ -75,7 +75,7 @@ class Numpad(QWidget):
 
 
     def createButton(self, text, x, y, id):
-        button = utils.createButton(text, self, 0, 0)
+        button = createButton(text, self, 0, 0)
         x, y = gap_width + (x * (gap_width + item_width)), gap_height + (y * (gap_height + item_height))
         button.setGeometry(x, y, item_width, item_height)
         self.connect(button, SIGNAL("released()"), self.mapper, SLOT("map()"))

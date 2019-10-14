@@ -45,6 +45,7 @@ class image_show:
 		x, y = image_show.x_off, image_show.y_off
 		# print('{} - x: {}, y: {}, keys: {}'.format(folder, x, y, keys))
 		img = cv.imread(os.path.join(folder, 'frame0.jpg'), 1)
+		cv.rectangle(img, (frame_x1-5, frame_y1-10), (frame_x2+35, frame_y2+60), (0, 0, 255))
 		cv.rectangle(img, (frame_x1+x, frame_y1+y), (frame_x2+x, frame_y2+y), (255, 0, 0))
 		for i in range(len(image_show.key_seq)):
 			key = key_colors[image_show.key_seq[i]]

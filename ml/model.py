@@ -1,8 +1,10 @@
 from sklearn.externals import joblib
 import numpy as np
 import cv2 as cv
+import sys
 
-import ml_utils
+sys.path.append('../')
+import ml.ml_utils as ml_utils
 
 class Model:
     def __init__(self, estimator, task_dir):

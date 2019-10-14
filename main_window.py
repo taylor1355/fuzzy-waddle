@@ -2,11 +2,12 @@ import sys, random
 import ctypes
 
 import utils
-from controller_tab import ControllerTab
-from energy_tab import EnergyTab
-from stream_test_tab import StreamTab
-from auto_fishing_tab import AutoFishingTab
-from fish_training_tab import FishTab
+
+from tabs.master_tab import MasterTab
+from tabs.energy_tab import EnergyTab
+from tabs.stream_test_tab import StreamTab
+from tabs.auto_fishing_tab import AutoFishingTab
+from tabs.fish_training_tab import FishTab
 
 from PySide2.QtGui import *
 from PySide2.QtWidgets import *
@@ -18,14 +19,19 @@ class MainWindow(QDialog):
 
         tabWidget = QTabWidget()
 
-        controllerTab = ControllerTab()
-        tabWidget.addTab(controllerTab, "Controller")
+        masterTab = MasterTab()
+        tabWidget.addTab(masterTab, "Controller")
+
+        autoFishingTab = AutoFishingTab()
+        tabWidget.addTab(autoFishingTab, "Auto Fish")
+        autoFishingTab.autoFishingModule = masterTab.controller.autoFishingModule
+
         energyTab = EnergyTab()
         tabWidget.addTab(energyTab, "Energy")
-        autoFishTab = AutoFishingTab()
-        tabWidget.addTab(autoFishTab, "Auto Fish")
+
         streamTab = StreamTab()
         tabWidget.addTab(streamTab, "Stream Test")
+
         fishTab = FishTab()
         tabWidget.addTab(fishTab, "Fish Data")
 
@@ -41,14 +47,14 @@ def is_admin():
     except: return False
 
 if __name__ == "__main__":
-    if is_admin():
-        app = QApplication()
+    # if is_admin():
+    app = QApplication()
 
-        mainWin = MainWindow()
-        x, y = 1280, 720
-        mainWin.setFixedSize(x, y)
-        mainWin.show()
+    mainWin = MainWindow()
+    x, y = 1280, 720
+    mainWin.setFixedSize(x, y)
+    mainWin.show()
 
-        sys.exit(app.exec_())
-    else:
-        ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)
+    sys.exit(app.exec_())
+    # else:
+    #     ctypes.windll.shell32.ShellExecuteW(None, "runas", sys.executable, __file__, None, 1)

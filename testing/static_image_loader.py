@@ -3,7 +3,7 @@ import pyautogui
 import cv2 as cv
 import numpy as np
 
-sys.path.append("ml")
+sys.path.append('ml')
 from ml.model import Model
 
 target_x = 574
@@ -339,7 +339,7 @@ class Runs():
         return out
 
     def run10():
-        mask_path = "ref_images/combined_key_color.tiff"
+        mask_path = "resources/combined_key_color.tiff"
         window_path = "screenshots/failure002.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 0)
@@ -367,7 +367,7 @@ class Runs():
         while (1):
             directory = "screenshots/failures/"
             for filename in os.listdir(directory):
-                mask_path = "ref_images/combined_key_color.tiff"
+                mask_path = "resources/combined_key_color.tiff"
                 window_path = "screenshots/failures/failure001.jpg"
                 window_path = directory + filename
                 mask = cv.imread(mask_path, 1)
@@ -465,7 +465,7 @@ class Runs():
         cv.destroyAllWindows()
 
     def run8():
-        mask_path = "ref_images/combined_key_color.tiff"
+        mask_path = "resources/combined_key_color.tiff"
         window_path = "screenshots/keys_img004.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 1)
@@ -520,7 +520,7 @@ class Runs():
         cv.destroyAllWindows()
 
     def run7():
-        mask_path = "ref_images/combined_key_color.tiff"
+        mask_path = "resources/combined_key_color.tiff"
         window_path = "screenshots/keys_img001.jpg"
         mask = cv.imread(mask_path, 1)
         frame = cv.imread(window_path, 0)
@@ -567,7 +567,7 @@ class Runs():
             comb_frame += key_detector.getDifferenceImage()
         max, max_x, max_y = KeyDetectorDiff.getMaxAndPos(comb_frame)
 
-        # masks_folder = "ref_images/"
+        # masks_folder = "resources/"
         # masks = [cv.imread(masks_folder + "w_key_color.tiff", 1), cv.imread(masks_folder + "a_key_color.tiff", 1), cv.imread(masks_folder + "s_key_color.tiff", 1), cv.imread(masks_folder + "d_key_color.tiff", 1)]
 
         # key_mappers = []
@@ -609,7 +609,7 @@ class Runs():
         return max, max_x, max_y
 
     def run6():
-        mask_path = "ref_images/combined_key_color.tiff"
+        mask_path = "resources/combined_key_color.tiff"
         window_path = "screenshots/keys_img001.jpg"
 
         mask = cv.imread(mask_path, 1)
@@ -685,7 +685,7 @@ class Runs():
 
 
     def run5():
-        mask_path = "ref_images/w_key_color2.jpg"
+        mask_path = "resources/w_key_color2.jpg"
         window_path = "screenshots/keys_img002.jpg"
 
         mask = cv.imread(mask_path, 1)
@@ -790,7 +790,7 @@ class Runs():
         return new_image
 
     def run4():
-        mask_path = "ref_images/w_key_color2.jpg"
+        mask_path = "resources/w_key_color2.jpg"
         window_path = "screenshots/keys_img004.jpg"
 
         mask = cv.imread(mask_path, 1)
@@ -920,7 +920,7 @@ class Runs():
         return avg_inv_dev - avg_std_dev
 
     def run3():
-        mask_path = "ref_images/w_key_color2.jpg"
+        mask_path = "resources/w_key_color2.jpg"
         window_path = "screenshots/keys_img004.jpg"
 
         mask = cv.imread(mask_path, 1)
@@ -1025,7 +1025,7 @@ class Runs():
         cv.destroyAllWindows()
 
     def run1(self):
-        comp_path = "ref_images/fishing_space_bar.jpg"
+        comp_path = "resources/fishing_space_bar.jpg"
         stream_path = "screenshots/space_img001.jpg"
 
         method = cv.TM_SQDIFF
@@ -1060,10 +1060,10 @@ class Runs():
         return True
 
     def image_combiner():
-        output_folder = "ref_images"
+        output_folder = "resources"
         output_name = "combined_key_color2.tiff"
         key_output_names = ["w_key_color.tiff", "a_key_color.tiff", "s_key_color.tiff", "d_key_color.tiff"]
-        input_folder = "ref_images/keys_orig/"
+        input_folder = "resources/keys_orig/"
         imgs = [cv.imread(input_folder + "w_key_centered.jpg", 1), cv.imread(input_folder + "a_key_centered.jpg", 1), cv.imread(input_folder + "s_key_centered.jpg", 1), cv.imread(input_folder + "d_key_centered.jpg", 1)]
 
         thresh = 120
@@ -1169,8 +1169,8 @@ class Runs():
             cv.destroyAllWindows()
 
     def mask_creator():
-        input_path = "ref_images/keys_orig/d_key_mask.jpg"
-        output_folder = "ref_images"
+        input_path = "resources/keys_orig/d_key_mask.jpg"
+        output_folder = "resources"
         output_name = "d_key_color.tiff"
         thresh = 127
 
