@@ -17,6 +17,7 @@ from utils.fishing_key_sequence import KeySequenceDetector
 from utils.game_window import GameWindow
 
 class StreamTab(QWidget):
+    name = "Stream Test"
     def __init__(self):
         super(StreamTab, self).__init__()
         openStreamButton = createButton("Open Stream", self, 0, 0)
@@ -50,6 +51,9 @@ class StreamTab(QWidget):
 
         self.workerLabel = createLabel("Worker is Sleeping", self, 0, 4)
         self.connect(self.thread, SIGNAL("send_back_qstring(QString)"), self._get_qstring)
+
+    def getModuleFrom(self, controller):
+        pass
 
     def _get_qstring(self, text):
         self.workerLabel.setText(text)

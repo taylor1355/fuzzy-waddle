@@ -22,7 +22,7 @@ class MasterTab(QWidget):
         self.terminateButton = createButton("Terminate", self, 1, 0)
         self.terminateButton.released.connect(self._terminate_button_handler)
 
-        self.controllerLabel = createLabelLText("Sleeping", self, 0, 1)
+        self.controllerLabel = createLabelLText("Ready", self, 0, 1)
 
         # self.isControllerActive = False
         self.controller = MasterModule()
@@ -46,11 +46,13 @@ class MasterTab(QWidget):
 
     def _terminate_button_handler(self):
         self.controller.terminate()
-        self.controllerLabel.setText("Sleeping")
+        self.controllerLabel.setText("Ready")
         self.startStopButton.setText("Start")
+        self.controller.isActive = False
+        print('terminating...')
 
     def _controller_finished_handler(self):
-        self.controllerLabel.setText("Sleeping")
+        self.controllerLabel.setText("Ready")
         self.startStopButton.setText("Start")
 
 class KeyboardListener():
@@ -61,9 +63,8 @@ class KeyboardListener():
             listener.join()
 
     def _on_release(key):
-        # print('caught key press: {}'.format(key))
-        if key == keyboard.Key.pause:
-            print('terminating from key press')
+        if key == keyboard.Key.end:
+            print('stopping from key press')
             KeyboardListener.masterTab.controller.terminate()
-            KeyboardListener.masterTab.controllerLabel.setText("Sleeping")
+            KeyboardListener.masterTab.controllerLabel.setText("Ready")
             KeyboardListener.masterTab.startStopButton.setText("Start")

@@ -1,4 +1,4 @@
-import ctypes
+import ctypes, pynput
 
 #Direct X scancode definitions can be found here: http://www.gamespp.com/directx/directInputKeyboardScanCodes.html
 key_codes = {
@@ -121,15 +121,31 @@ class Input(ctypes.Structure):
                 ("ii", Input_I)]
 
 def PressKey(key):
+    hexKeyCode = key_codes[key]
     extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.ki = KeyBdInput( 0, key_codes[key], 0x0008, 0, ctypes.pointer(extra) )
-    x = Input( ctypes.c_ulong(1), ii_ )
+    ii_ = pynput._util.win32.INPUT_union()
+    ii_.ki = pynput._util.win32.KEYBDINPUT(0, hexKeyCode, 0x0008, 0, ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
+    x = pynput._util.win32.INPUT(ctypes.c_ulong(1), ii_)
     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
 
 def ReleaseKey(key):
+    hexKeyCode = key_codes[key]
     extra = ctypes.c_ulong(0)
-    ii_ = Input_I()
-    ii_.ki = KeyBdInput( 0, key_codes[key], 0x0008 | 0x0002, 0, ctypes.pointer(extra) )
-    x = Input( ctypes.c_ulong(1), ii_ )
+    ii_ = pynput._util.win32.INPUT_union()
+    ii_.ki = pynput._util.win32.KEYBDINPUT(0, hexKeyCode, 0x0008 | 0x0002, 0, ctypes.cast(ctypes.pointer(extra), ctypes.c_void_p))
+    x = pynput._util.win32.INPUT(ctypes.c_ulong(1), ii_)
     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+# def PressKey(key):
+#     extra = ctypes.c_ulong(0)
+#     ii_ = Input_I()
+#     ii_.ki = KeyBdInput( 0, key_codes[key], 0x0008, 0, ctypes.pointer(extra) )
+#     x = Input( ctypes.c_ulong(1), ii_ )
+#     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
+
+# def ReleaseKey(key):
+#     extra = ctypes.c_ulong(0)
+#     ii_ = Input_I()
+#     ii_.ki = KeyBdInput( 0, key_codes[key], 0x0008 | 0x0002, 0, ctypes.pointer(extra) )
+#     x = Input( ctypes.c_ulong(1), ii_ )
+#     ctypes.windll.user32.SendInput(1, ctypes.pointer(x), ctypes.sizeof(x))
