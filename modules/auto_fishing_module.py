@@ -4,120 +4,128 @@ import pyautogui
 import cv2 as cv
 import numpy as np
 import random
+import uuid
 
-# import direct_input
-# import input
-
-from utils.fishing_key_sequence import KeySequenceDetector
-from ml.model import Model
+from utils.game_window import GameWindow
+from utils.direct_input import PressKey, ReleaseKey
+from ml.key_classifier import Classifier
 from actions import Action
 
-do_actions = True
-show_image = True
-output_chars = False
+class State():
+    LINE_OUT_OF_WATER = 1
+    LINE_IN_WATER = 2
 
 class AutoFishingModule():
+
+    space_icon_x, space_icon_y = 588, 192
+    space_icon_thresh = 3
+    key_names = 'W', 'A', 'S', 'D'
+
     def __init__(self):
         self.isEnabled = False
+
         self.reelInFishAction = Action(0, self.reelInFish)
         self.castLineAction = Action(0, self.castLine)
+        self.classifier = Classifier('./ml/')
+        self.comp_img = cv.imread('resources/fishing_space_bar.jpg', 0)
+        self.window = GameWindow("BLACK DESERT")
+        self.colorGrabber = ColorGrabber()
 
+        self.output = False
+        self.demoTiming = False
+        self.swapRods = False
+        self.rodCharSeq = ''
+        self.rodSwapThresh = 5
+
+        self.collectAll = True
+        self.discardBlue = False
+        self.discardGreen = False
+        self.collectUnknowns = False
+
+        self.reset()
+
+
+    def reset(self):
         self.last_frame = None
-        self.state = State.WAIT_SPACEBAR
+        self.state = State.LINE_OUT_OF_WATER
+        self.rodCatchCount = 0
 
-        self.keySequenceDetector = KeySequenceDetector()
-        self.spacebar_model = Model.load("ml/spacebar/spacebar_model.pkl")
-
-        self.cast_reel_threshold = 217
-        self.spacebar_height, self.spacebar_width = self.spacebar_model.box_size
-        start_x, start_y = 575, 200
-        box_width, box_height = self.spacebar_width, int(1.5 * self.spacebar_height)
-        self.spacebar_search_box = (start_x, start_x + box_width, start_y, start_y + box_height)
 
     def getActions(self, frame):
-        self.last_frame = frame
         frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
 
-        spacebar_prediction = self.predict_spacebar()
-        spacebar_detected = spacebar_prediction is not None
-        cast = spacebar_detected and spacebar_prediction[1] > self.cast_reel_threshold
+        method = cv.TM_SQDIFF
+        result = cv.matchTemplate(self.comp_img, frame_gray, method)
+        mn, _, mnLoc, _ = cv.minMaxLoc(result)
+        MPx, MPy = mnLoc
+        print("x: " + str(MPx) + ", y: " + str(MPy))
 
-        if spacebar_detected:
-            print("detected at {}".format(spacebar_prediction))
-
-        actions = []
-        if self.state == State.WAIT_SPACEBAR:
-            if cast:
-                self.state = State.CAST
-            elif spacebar_detected:
-                self.state = State.REEL
-        if self.state == State.CAST:
-            actions = [self.castLineAction]
-            self.state = self.state.next()
-        elif self.state == State.WAIT_AFTER_CAST:
-            if not spacebar_detected:
-                self.state = self.state.next()
-        elif self.state == State.REEL:
-            actions = [self.reelInFishAction]
-            self.state = self.state.next()
-
-        if show_image:
-            img = np.array(frame)
-
-            font = cv.FONT_HERSHEY_SIMPLEX
-            if spacebar_detected:
-                cv.rectangle(img, (spacebar_prediction[0], spacebar_prediction[1]), (spacebar_prediction[0] + self.spacebar_width, spacebar_prediction[1] + self.spacebar_height), (0, 0, 255), 2)
-                if cast:
-                    text = "Cast Space Bar Detected"
-                else:
-                    text = "Reel Space Bar Detected"
-                cv.putText(img, text, (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
+        if (abs(MPx - self.space_icon_x) < self.space_icon_thresh and abs(MPy - self.space_icon_y) < self.space_icon_thresh):
+            if (self.state == State.LINE_OUT_OF_WATER):
+                return [self.castLineAction,]
             else:
-                cv.putText(img, "Idle Detected", (180, 25), font, 0.8, (255, 0, 0), 2, cv.LINE_AA)
+                return [self.reelInFishAction,]
+        return []
 
-            min_x, max_x, min_y, max_y = self.spacebar_search_box
-            cv.rectangle(img, (min_x, min_y), (max_x, max_y), (255,0,0), 1)
-            cv.imshow("output", img)
-            cv.waitKey(1)
-
-        if not do_actions:
-            return []
-        return actions
-
-    def predict_spacebar(self):
-        min_x, max_x, min_y, max_y = self.spacebar_search_box
-        search_region = self.last_frame[min_y : max_y, min_x : max_x]
-        class_detected, prediction = self.spacebar_model.predict(search_region)
-        if class_detected == 1:
-            return prediction + np.array([min_x, min_y])
-        return None
 
     def reelInFish(self):
-        direct_input.PressKey("SPACE")
+        PressKey("SPACE")
         print("reeling in")
-        direct_input.ReleaseKey("SPACE")
-        time.sleep(1.7)
-        direct_input.PressKey("SPACE")
+        ReleaseKey("SPACE")
+        time.sleep(1.6 + (0.04 if self.demoTiming else 0))
+        PressKey("SPACE")
         print("playing game")
-        direct_input.ReleaseKey("SPACE")
-        time.sleep(2.5)
-        self.keySequenceDetector.processFrames(2, 2)
-        keySequence = self.keySequenceDetector.getKeySequence()
-        print("keys: " + str(keySequence))
+        ReleaseKey("SPACE")
+        time.sleep(3.0)
+        img = self.window.grab_frame()
+        if self.output:
+            keySequence = self.classifier.evaluate_and_save(img, './ml/new_ui_keys/raw')
+        else:
+            keySequence = self.classifier.evaluate(img)
+        if keySequence is None:
+            keySequence = []
+        print("keys: " + str([self.key_names[key] for key in keySequence]))
         for key in keySequence:
             self.tapKey(key)
-        time.sleep(3)
-        self.tapKey(4)
+        time.sleep(6)
+        # decide wether to grab or not
+        if self.collectAll:
+            print('shortcutted')
+            self.tapKey(4)
+        else:
+            img = self.window.grab_frame()
+            cv.imwrite(f'./ml/new_ui_keys/catches/{uuid.uuid4()}.tiff', img)
+            if self.colorGrabber.evaluate(img, self.discardBlue, self.discardGreen, self.collectUnknowns):
+                self.tapKey(4)
+        self.rodCatchCount += 1
+        if self.swapRods and self.rodCatchCount >= self.rodSwapThresh:
+            print('cycling rods')
+            time.sleep(0.5)
+            for char in self.rodCharSeq:
+                self.tapChar(char)
+            self.rodCatchCount = 0
+        self.state = State.LINE_OUT_OF_WATER
+
 
     def castLine(self):
-        direct_input.PressKey("SPACE")
+        PressKey("SPACE")
         print("casting line")
-        direct_input.ReleaseKey("SPACE")
+        ReleaseKey("SPACE")
         time.sleep(5)
+        self.state = State.LINE_IN_WATER
 
-    def sleep(self):
-        sleep_time = 0.02 + np.clip(random.gauss(0.03, 0.01), 0, 0.06)
+
+    def key_sleep(self):
+        sleep_time = 0.04 + np.clip(random.gauss(0.04, 0.015), 0, 0.8)
         time.sleep(sleep_time)
+
+
+    def tapChar(self, char):
+        PressKey(char)
+        self.key_sleep()
+        ReleaseKey(char)
+        self.key_sleep()
+
 
     def tapKey(self, key):
         key_string = ""
@@ -131,22 +139,74 @@ class AutoFishingModule():
             key_string = "D"
         else:
             key_string = "R"
-        direct_input.PressKey(key_string)
-        self.sleep()
-        direct_input.ReleaseKey(key_string)
-        self.sleep()
+        PressKey(key_string)
+        self.key_sleep()
+        ReleaseKey(key_string)
+        self.key_sleep()
 
-class State(Enum):
-    WAIT_SPACEBAR = 0
-    CAST = 1
-    WAIT_AFTER_CAST = 2
-    REEL = 3
 
-    def next(self):
-        if self == State.WAIT_AFTER_CAST:
-            next_state = State.WAIT_SPACEBAR
-        else:
-            next_state = State((self.value + 1) % len(State))
-        print("Exited State: {}".format(self))
-        print("Entered State: {}".format(next_state))
-        return next_state
+class Colors():
+    GOLD = 1
+    BLUE = 2
+    GREEN = 3
+    OTHER = 4
+
+class ColorGrabber():
+
+    item_x, item_y, dx = 11, 61, 54
+    back_colors = (
+        (Colors.GOLD, (197, 71, 13)),
+        (Colors.BLUE, (53.5, 115.5, 188)),
+        (Colors.GREEN, (188, 92, 125)),
+    )
+
+    def __init__(self):
+        self.comp_img = cv.imread('./resources/item_box.jpg', 0)
+        self.color_mask = cv.imread('./resources/item_color_mask3.tiff', 0)
+        self.relic_img = cv.imread('./resources/relic_shard.jpg', 1) * 1.0
+
+    def evaluate(self, frame, discardBlue, discardGreen, keepUnknowns):
+        print(discardBlue, discardGreen, keepUnknowns)
+        frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
+        result = cv.matchTemplate(self.comp_img, frame_gray, cv.TM_SQDIFF)
+        mn, _, mnLoc, _ = cv.minMaxLoc(result)
+        x, y = mnLoc
+
+        img = frame[y:y+self.comp_img.shape[0], x:x+self.comp_img.shape[1]]
+
+        img_colors = []
+        diffs = []
+        shouldPass = True
+        for i in range(4):
+            color = [0, 0, 0]
+            diffs.append(np.sum(np.square(self.relic_img - img[61:61+45,11+i*self.dx:11+i*self.dx+45])))
+            for c in range(3):
+                color[c] = np.sum(self.color_mask * img[61:61+45,11+i*self.dx:11+i*self.dx+45,c]) / 176
+            print(color)
+            for index, back_color in self.back_colors:
+                for c in range(3):
+                    if abs(back_color[c] - color[c]) > 10:
+                        break
+                else:
+                    if index == Colors.GOLD:
+                        print('gold')
+                        return True
+                    elif index == Colors.BLUE:
+                        print('blue')
+                        if discardBlue:
+                            shouldPass = False
+                        else:
+                            return True
+                    elif index == Colors.GREEN:
+                        print('green')
+                        if discardGreen:
+                            shouldPass = False
+                        else:
+                            return True
+                    break
+        # check to see if it is relic
+        if min(diffs) < 1000000:
+            print('relic')
+            return True
+        print(f'defaulting, {shouldPass and keepUnknowns}')
+        return shouldPass and keepUnknowns

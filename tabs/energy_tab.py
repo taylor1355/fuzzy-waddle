@@ -8,6 +8,7 @@ from utils.ui_generator import *
 from utils.numpad import Numpad
 
 class EnergyTab(QWidget):
+    name = "Energy"
     def __init__(self):
         super(EnergyTab, self).__init__()
 
@@ -24,6 +25,9 @@ class EnergyTab(QWidget):
         self.isTimerOn = False
         self.timer = QTimer()
         self.timer.timeout.connect(self._timer_tick)
+
+    def getModuleFrom(self, controller):
+        pass
 
     def _start_timer(self):
         if self.isTimerOn == True:

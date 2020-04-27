@@ -2,6 +2,7 @@ import sys, time
 import pyautogui
 import cv2 as cv
 import numpy as np
+from queue import PriorityQueue
 
 from utils.game_window import GameWindow
 from modules.auto_fishing_module import AutoFishingModule
@@ -14,6 +15,7 @@ class MasterModule(QThread):
         self.isActive = False
         self.autoFishingModule = AutoFishingModule()
         self.modules = [self.autoFishingModule]
+        self.actions = PriorityQueue()
 
     def __del__(self):
         self.wait()
@@ -23,6 +25,10 @@ class MasterModule(QThread):
 
     def run(self):
         self.isActive = True
+
+        for module in self.modules:
+            module.reset()
+
         window = GameWindow("BLACK DESERT")
         window.move_to_foreground()
 
@@ -34,11 +40,15 @@ class MasterModule(QThread):
             # fill up queue
             for module in self.modules:
                 if module.isEnabled:
-                    actions = module.getActions(frame)
+                    for action in module.getActions(frame):
+                        self.actions.put(action)
             # process queue
-            for action in actions:
-                if action:
-                    action.execute()
-                else:
-                    print("idle...")
-                    time.sleep(1)
+            while not self.actions.empty():
+                self.actions.get().execute()
+                if not self.isActive:
+                    return
+            print("sleeping...")
+            for i in range(20):
+                time.sleep(0.1)
+                if not self.isActive:
+                    return

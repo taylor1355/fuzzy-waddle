@@ -9,7 +9,7 @@ from ml.model import Model
 
 pixel_thresh = 140
 output_amnt = 8
-output_folder = "ml/keys_loc/raw/"
+output_folder = "ml/new_ui_keys/raw/"
 output_border = True
 output_overlay = False
 output_pixel_border = 5
@@ -71,7 +71,7 @@ class KeySequenceDetector():
             out_dir = output_folder + str(uuid.uuid4())
             print("saving to " + out_dir)
             os.makedirs(out_dir)
-            for i in range(len(frames)):
+            for i in range(1):#len(frames)):
                 cv.imwrite(os.path.join(out_dir, "frame" + str(i) + ".jpg"), frames[i])
 
             di = KeyDetectorDiff.di
@@ -99,7 +99,7 @@ class KeySequenceDetector():
 
     def getCharImage(self, pos):
         frame = self.last_frame
-        x, y, w, h = self.start_x + pos * 35, self.start_y, self.w, self.h
+        x, y, w, h = self.start_x + pos * 37, self.start_y, self.w, self.h
         img = np.zeros((self.h, self.w, 3), np.uint8)
         img[:, :] = frame[y:y+h, x:x+w]
         return img
@@ -118,7 +118,7 @@ class KeySequenceDetector():
 
 
 class KeyDetectorDiff():
-    x, y, dx, dy, di = 463, 380, 30, 30, 35
+    x, y, dx, dy, di = 463, 380, 30, 30, 37
     amnt = 1
 
     def __init__(self, mask, pos):

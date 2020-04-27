@@ -3,6 +3,9 @@ class Action():
         self.priority = priority
         self.callback = callback
 
+    def __lt__(self, obj):
+        return self.priority < obj.priority
+
     def execute(self):
         if self.callback:
             self.callback()
