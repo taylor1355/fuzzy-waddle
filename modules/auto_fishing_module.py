@@ -187,27 +187,33 @@ class ColorGrabber():
             for c in range(3):
                 color[c] = np.sum(self.color_mask * img[61:61+45,11+i*self.dx:11+i*self.dx+45,c]) / 176
             print(color)
-            for index, back_color in self.back_colors:
-                for c in range(3):
-                    if abs(back_color[c] - color[c]) > 10:
-                        break
+
+            if(abs(color[0] - color[1]) < 10 and abs(color[0] - color[2]) < 10):
+                print('Other')
+                if(keepUnknowns):
+                    shouldpass = True
+            elif(color[2] > color[1] and color[2] > color[0]):
+                print('blue')
+                if discardBlue:
+                    shouldPass = False
                 else:
-                    if index == Colors.GOLD:
-                        print('gold')
-                        return True
-                    elif index == Colors.BLUE:
-                        print('blue')
-                        if discardBlue:
-                            shouldPass = False
-                        else:
-                            return True
-                    elif index == Colors.GREEN:
-                        print('green')
-                        if discardGreen:
-                            shouldPass = False
-                        else:
-                            return True
-                    break
+                    return True
+            elif(color[0]/color[2] > 4):
+                print('gold')
+                return True
+            elif(color[0] > color[1] and color[0] > color[2] and color[2] < color[1]):
+                print('red')
+                return True
+            elif(color[0] > color[2] and color[2] > color[1]):
+                print('green')
+                if discardGreen:
+                    shouldPass = False
+                else:
+                    return True
+            else:
+                break
+
+
         # check to see if it is relic
         if min(diffs) < 1000000:
             print('relic')
