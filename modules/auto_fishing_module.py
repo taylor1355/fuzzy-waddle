@@ -17,8 +17,9 @@ class State():
 
 class AutoFishingModule():
 
-    space_icon_x, space_icon_y = 588, 192
-    space_icon_thresh = 3
+    space_icon_x = 588
+    space_icon_ys = 197, 192
+    space_icon_thresh = 2
     key_names = 'W', 'A', 'S', 'D'
 
     def __init__(self):
@@ -31,8 +32,8 @@ class AutoFishingModule():
         self.window = GameWindow("BLACK DESERT")
         self.colorGrabber = ColorGrabber()
 
-        self.output = False
-        self.demoTiming = False
+        self.outputColors = False
+        self.outputKeys = False
         self.swapRods = False
         self.rodCharSeq = ''
         self.rodSwapThresh = 5
@@ -60,7 +61,7 @@ class AutoFishingModule():
         MPx, MPy = mnLoc
         print("x: " + str(MPx) + ", y: " + str(MPy))
 
-        if (abs(MPx - self.space_icon_x) < self.space_icon_thresh and abs(MPy - self.space_icon_y) < self.space_icon_thresh):
+        if (abs(MPx - self.space_icon_x) < self.space_icon_thresh and (abs(MPy - space_icon_y) < self.space_icon_thresh for space_icon_y in self.space_icon_ys)):
             if (self.state == State.LINE_OUT_OF_WATER):
                 return [self.castLineAction,]
             else:
@@ -72,13 +73,13 @@ class AutoFishingModule():
         PressKey("SPACE")
         print("reeling in")
         ReleaseKey("SPACE")
-        time.sleep(1.6 + (0.04 if self.demoTiming else 0))
+        time.sleep(1.6 + 0.04)
         PressKey("SPACE")
         print("playing game")
         ReleaseKey("SPACE")
         time.sleep(3.0)
         img = self.window.grab_frame()
-        if self.output:
+        if self.outputKeys:
             keySequence = self.classifier.evaluate_and_save(img, './ml/new_ui_keys/raw')
         else:
             keySequence = self.classifier.evaluate(img)
@@ -94,7 +95,11 @@ class AutoFishingModule():
             self.tapKey(4)
         else:
             img = self.window.grab_frame()
-            cv.imwrite(f'./ml/new_ui_keys/catches/{uuid.uuid4()}.tiff', img)
+            if self.outputColors:
+                folder = './ml/new_ui_keys/catches'
+                if not os.path.exists(folder):
+                    os.makedirs(folder)
+                cv.imwrite(f'{folder}/{uuid.uuid4()}.tiff', img)
             if self.colorGrabber.evaluate(img, self.discardBlue, self.discardGreen, self.collectUnknowns):
                 self.tapKey(4)
         self.rodCatchCount += 1
@@ -166,7 +171,6 @@ class ColorGrabber():
         self.relic_img = cv.imread('./resources/relic_shard.jpg', 1) * 1.0
 
     def evaluate(self, frame, discardBlue, discardGreen, keepUnknowns):
-        print(discardBlue, discardGreen, keepUnknowns)
         frame_gray = cv.cvtColor(frame, cv.COLOR_BGR2GRAY)
         result = cv.matchTemplate(self.comp_img, frame_gray, cv.TM_SQDIFF)
         mn, _, mnLoc, _ = cv.minMaxLoc(result)

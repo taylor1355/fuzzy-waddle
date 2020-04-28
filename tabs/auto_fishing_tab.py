@@ -15,11 +15,10 @@ class AutoFishingTab(QWidget):
         super(AutoFishingTab, self).__init__()
         self.isEnabledCheckBox = createCheckBox("Enabled", self, 0, 0)
         self.isEnabledCheckBox.stateChanged.connect(self._is_enabled_checkbox_changed)
-        self.outputCheckBox = createCheckBox("Output TD", self, 0, 1)
-        self.outputCheckBox.stateChanged.connect(self._output_checkbox_changed)
-        self.demoTimingCheckBox = createCheckBox("Demo Timing", self, 0, 2)
-        self.demoTimingCheckBox.stateChanged.connect(self._demo_timing_checkbox_changed)
-        # self.setEnabled(False)
+        self.outputColorsCheckBox = createCheckBox("Output Colors", self, 0, 1)
+        self.outputColorsCheckBox.stateChanged.connect(self._output_colors_checkbox_changed)
+        self.outputKeysCheckBox = createCheckBox("Output Keys", self, 0, 2)
+        self.outputKeysCheckBox.stateChanged.connect(self._output_keys_checkbox_changed)
 
         self.collectAllCheckBox = createCheckBox("Collect All", self, 1, 0, Qt.Checked)
         self.collectAllCheckBox.stateChanged.connect(self._collect_all_checkbox_changed)
@@ -28,10 +27,9 @@ class AutoFishingTab(QWidget):
         self.discardBlueCheckBox.stateChanged.connect(self._discard_blue_checkbox_changed)
         self.discardGreenCheckBox = createCheckBox("Discard Green", self, 1, 2)
         self.discardGreenCheckBox.stateChanged.connect(self._discard_green_checkbox_changed)
-        self.setCollectAll(True)
-
         self.collectUnknownsCheckBox = createCheckBox("Collect Other", self, 1, 3)
         self.collectUnknownsCheckBox.stateChanged.connect(self._collect_unknowns_checkbox_changed)
+        self.setCollectAll(True)
 
         self.swapRodsCheckBox = createCheckBox("Swap Rods", self, 2, 0)
         self.swapRodsCheckBox.stateChanged.connect(self._swap_rods_checkbox_changed)
@@ -40,19 +38,17 @@ class AutoFishingTab(QWidget):
         self.setRodSeqButton.released.connect(self._set_rod_seq_button_handler)
         self.setSwapRods(False)
 
-
     def getModuleFrom(self, controller):
         self.autoFishingModule = controller.autoFishingModule
-
 
     def setSwapRods(self, swapRods):
         self.rodCharSeqTextBox.setEnabled(swapRods)
         self.setRodSeqButton.setEnabled(swapRods)
 
-
     def setCollectAll(self, collectAll):
         self.discardBlueCheckBox.setEnabled(not collectAll)
         self.discardGreenCheckBox.setEnabled(not collectAll)
+        self.collectUnknownsCheckBox.setEnabled(not collectAll)
 
     def _is_enabled_checkbox_changed(self, state):
         if state == Qt.Checked:
@@ -64,21 +60,21 @@ class AutoFishingTab(QWidget):
             self.autoFishingModule.isEnabled = False
             # self.setEnabled(False)
 
-    def _output_checkbox_changed(self, state):
+    def _output_colors_checkbox_changed(self, state):
         if state == Qt.Checked:
-            print("enabled output training data")
-            self.autoFishingModule.output = True
+            print("enabled output color data")
+            self.autoFishingModule.outputColors = True
         else:
-            print("disabled output training data")
-            self.autoFishingModule.output = False
+            print("disabled output color data")
+            self.autoFishingModule.outputColors = False
 
-    def _demo_timing_checkbox_changed(self, state):
+    def _output_keys_checkbox_changed(self, state):
         if state == Qt.Checked:
-            print("enabled demo timing")
-            self.autoFishingModule.demoTiming = True
+            print("enabled output keys data")
+            self.autoFishingModule.outputKeys = True
         else:
-            print("disabled demo timing")
-            self.autoFishingModule.demoTiming = False
+            print("disabled output keys data")
+            self.autoFishingModule.outputKeys = False
 
     def _collect_all_checkbox_changed(self, state):
         if state == Qt.Checked:

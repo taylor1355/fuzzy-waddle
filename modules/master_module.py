@@ -46,9 +46,10 @@ class MasterModule(QThread):
             while not self.actions.empty():
                 self.actions.get().execute()
                 if not self.isActive:
-                    return
+                    break
             print("sleeping...")
             for i in range(20):
-                time.sleep(0.1)
                 if not self.isActive:
-                    return
+                    break
+                time.sleep(0.1)
+        print('main thread stopped')

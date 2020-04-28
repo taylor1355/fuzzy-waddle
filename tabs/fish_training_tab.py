@@ -12,7 +12,7 @@ from utils.direct_input import PressKey, ReleaseKey
 import utils.input
 from utils.ui_generator import *
 from utils.fishing_key_sequence import KeySequenceDetector
-from ml.new_ui_keys.classifier import Classifier
+from ml.key_classifier import Classifier
 
 class FishTab(QWidget):
     name = "Fish Data"
@@ -94,7 +94,7 @@ class StreamThread(QThread):
         super(StreamThread, self).__init__()
         self.keySequenceDetector = KeySequenceDetector()
         self.keySequenceDetector.output = True
-        self.classifier = Classifier('./ml/new_ui_keys/')
+        self.classifier = Classifier('./ml/')
 
     def __del__(self):
         self.wait()

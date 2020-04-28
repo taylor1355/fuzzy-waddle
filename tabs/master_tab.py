@@ -65,6 +65,7 @@ class KeyboardListener():
     def _on_release(key):
         if key == keyboard.Key.end:
             print('stopping from key press')
-            KeyboardListener.masterTab.controller.terminate()
+            KeyboardListener.masterTab.controller.quit()
             KeyboardListener.masterTab.controllerLabel.setText("Ready")
             KeyboardListener.masterTab.startStopButton.setText("Start")
+            KeyboardListener.masterTab.controller.isActive = False
